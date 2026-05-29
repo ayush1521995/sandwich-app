@@ -19,7 +19,6 @@
         const ADMIN_PIN = "1122";   
         const DELIVERY_PIN = "3344"; 
 
-        // Menu items mapped with stylized SVG art to keep layout zero-cost and elegant
         const MENU = [
             { id: "item_1", name: "Spinach N Corn Sandwich", price: 110, desc: "Creamy blanched baby spinach and sweet kernel corn tossed lightly in house white sauce.", icon: "🥬" },
             { id: "item_2", name: "Veg Coleslaw Sandwich", price: 80, desc: "Crisp shredded garden greens & summer cabbage crunch folded in premium light dressing.", icon: "🥗" },
@@ -30,6 +29,7 @@
 
         let cart = {};
         let userProfile = JSON.parse(localStorage.getItem('sandwich_user_v2')) || null;
+        let globalOrdersCache = [];
     </script>
 
     <nav class="bg-[#052219] text-[#F3EDE4] px-6 py-4 sticky top-0 z-50 shadow-sm flex justify-between items-center border-b border-emerald-950/40">
@@ -157,9 +157,29 @@
     </section>
 
     <script>
-        let globalOrdersCache = [];
+        // --- View Switching Layout Handler (Moved to Top of Scope) ---
+        function switchView(viewId) {
+            document.querySelectorAll('.app-view').forEach(view => view.classList.add('hidden'));
+            const destination = document.getElementById(viewId);
+            if(destination) {
+                destination.classList.remove('hidden');
+            }
+            window.scrollTo(0,0);
+        }
 
-        // Formatting utilities to turn raw ISO date strings into clean "Sat, May 30" cards
+        // --- Core Initializer Hooks ---
+        window.addEventListener('DOMContentLoaded', () => {
+            initMenu();
+            initDateSelectors();
+            checkUrlParametersForSecureRoutes(); 
+            
+            if(userProfile) {
+                if(document.getElementById('user-name') && userProfile.name) document.getElementById('user-name').value = userProfile.name;
+                if(document.getElementById('user-phone') && userProfile.phone) document.getElementById('user-phone').value = userProfile.phone;
+                if(document.getElementById('user-address') && userProfile.address) document.getElementById('user-address').value = userProfile.address;
+            }
+        });
+
         function formatHumanDate(dateStr) {
             if(!dateStr) return '';
             const normalized = dateStr.split('T')[0]; 
@@ -168,7 +188,6 @@
             return dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
         }
 
-        // Display actions wrapper without alerts/pop-ups
         function setStatusSilent(orderId, status, onFinishedCallback) {
             const payload = { action: "updateStatus", orderId: orderId, status: status };
             fetch(API_URL, {
@@ -178,7 +197,7 @@
                 body: JSON.stringify(payload)
             }).then(() => {
                 onFinishedCallback();
-            }).catch(err => console.error("Mutation failure pipeline sync:", err));
+            }).catch(err => console.error("Mutation failure sync dropped:", err));
         }
 
         function checkUrlParametersForSecureRoutes() {
@@ -190,7 +209,9 @@
             } else if (pane === 'delivery') {
                 if (prompt("Enter Rider PIN:") === DELIVERY_PIN) { switchView('delivery-view'); loadDeliveryData(); } 
                 else { alert("Denied."); window.location.href = window.location.pathname; }
-            } else { switchView('customer-menu'); }
+            } else { 
+                switchView('customer-menu'); 
+            }
         }
 
         function initMenu() {
@@ -272,10 +293,7 @@
             for(let name in cart) { totalAmount += (MENU.find(m => m.name === name).price * cart[name]); }
 
             const btn = document.getElementById('btn-submit-order');
-            btn.disabled = true; btn.innerText = "Transmitting Security File Sheets Ledger...";
-
-            localStorage.setItem('sandwich_user_v2', JSON.stringify({ name: name, phone: phone, address: address }));
-            userProfile = { name: name, phone: phone, address: address };
+            btn.disabled = true; btn.innerText = "Transmitting Entry...";
 
             const payload = { action: "placeOrder", name: name, phone: phone, address: address, deliveryDate: deliveryDate, items: cart, total: totalAmount };
 
@@ -285,9 +303,19 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             }).then(() => {
-                cart = {}; initMenu(); calculateCartTotals();
+                localStorage.setItem('sandwich_user_v2', JSON.stringify({ name: name, phone: phone, address: address }));
+                userProfile = { name: name, phone: phone, address: address };
+                cart = {}; 
+                initMenu(); 
+                calculateCartTotals();
+                btn.disabled = false; 
+                btn.innerText = "Confirm Pre-Order";
                 openHistory();
-                btn.disabled = false; btn.innerText = "Confirm Pre-Order";
+            }).catch(err => {
+                console.error(err);
+                alert("Network out of synchronization. Try again.");
+                btn.disabled = false;
+                btn.innerText = "Confirm Pre-Order";
             });
         }
 
@@ -312,7 +340,7 @@
 
         function fetchAndRenderHistory(phone) {
             const container = document.getElementById('orders-history-list');
-            container.innerHTML = `<p class="text-xs text-zinc-400 text-center py-6">Pulling encrypted order index history...</p>`;
+            container.innerHTML = `<p class="text-xs text-zinc-400 text-center py-6">Pulling order index history...</p>`;
             fetch(`${API_URL}?action=getOrders`)
             .then(res => res.json())
             .then(res => {
@@ -346,6 +374,8 @@
                             </div>
                         `;
                     }).join('');
+                } else {
+                    container.innerHTML = `<p class="text-xs text-zinc-400 text-center py-6">No order logs found.</p>`;
                 }
             });
         }
@@ -392,7 +422,6 @@
             let totals = { "Spinach N Corn Sandwich": 0, "Veg Coleslaw Sandwich": 0, "Veg Green salad sandwich": 0, "Chicken Salami Sandwich": 0, "Chicken Sandwich": 0 };
             
             globalOrdersCache.forEach(order => {
-                // Read and format date keys correctly for comparison
                 let cleanOrderDate = order.DeliveryDate ? order.DeliveryDate.split('T')[0] : '';
                 if(cleanOrderDate === targetDate && (order.Status === "Ordered" || order.Status === "Accepted")) {
                     for(let name in order.ItemsBreakdown) {
@@ -403,7 +432,7 @@
             summaryBox.innerHTML = Object.entries(totals).map(([item, qty]) => `
                 <div class="flex justify-between items-center bg-zinc-50 p-3 rounded-xl border border-zinc-100 text-xs font-medium">
                     <span class="text-zinc-700">${item}</span>
-                    <span class="${qty > 0 ? 'bg-[#052219] text-white animate-pulse' : 'bg-zinc-200 text-zinc-400'} font-bold px-3 py-1 rounded-lg text-xs min-w-[34px] text-center">${qty}</span>
+                    <span class="${qty > 0 ? 'bg-[#052219] text-white' : 'bg-zinc-200 text-zinc-400'} font-bold px-3 py-1 rounded-lg text-xs min-w-[34px] text-center">${qty}</span>
                 </div>
             `).join('');
         }
@@ -444,13 +473,6 @@
                     }).join('');
                 }
             });
-        }
-
-        function switchView(viewId) {
-            document.querySelectorAll('.app-view').forEach(view => view.classList.add('hidden'));
-            const destination = document.getElementById(viewId);
-            if(destination) destination.classList.remove('hidden');
-            window.scrollTo(0,0);
         }
 
         function executeStatusChange(orderId, status, callback) {

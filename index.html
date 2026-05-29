@@ -15,10 +15,12 @@
 
     <script>
         // --- CONFIGURATION ---
-        // PASTE YOUR GOOGLE APPS SCRIPT URL HERE
-        const API_URL = "https://script.google.com/macros/s/AKfycbyoHcz8RUsenFJnxsERZIbCuYNH2y5e2k9VNloawe92ACyudAVmCze6naXc99sYd-hT-w/exec"; 
+        const API_URL = https://script.google.com/macros/s/AKfycbyoHcz8RUsenFJnxsERZIbCuYNH2y5e2k9VNloawe92ACyudAVmCze6naXc99sYd-hT-w/exec"; 
         
-        // Hardcoded premium menu data to ensure instant visual load
+        // --- SECURITY PIN CONFIGURATION ---
+        const ADMIN_PIN = "1122";    // Change this to your preferred admin gate pass code
+        const DELIVERY_PIN = "3344"; // Change this to your preferred delivery rider gate pass code
+
         const MENU = [
             { id: "item_1", name: "Spinach N Corn Sandwich", price: 110, desc: "Creamy blanched spinach and sweet kernel corn served chilled." },
             { id: "item_2", name: "Veg Coleslaw Sandwich", price: 80, desc: "Classic crisp shredded vegetables tossed in a gourmet dressing." },
@@ -33,10 +35,9 @@
 
     <nav class="bg-[#0A2E24] text-[#F5EBE1] px-6 py-4 sticky top-0 z-50 shadow-md flex justify-between items-center">
         <h1 class="serif text-2xl font-bold tracking-wide cursor-pointer" onclick="switchView('customer-menu')">The Cold Press</h1>
-        <div class="flex space-items gap-4 text-xs tracking-wider uppercase font-semibold">
+        <div class="flex space-items gap-6 text-xs tracking-wider uppercase font-semibold">
             <button onclick="switchView('customer-menu')" class="hover:text-amber-400 transition">Menu</button>
             <button onclick="openHistory()" class="hover:text-amber-400 transition">My Orders</button>
-            <button onclick="openAdmin()" class="text-zinc-400 hover:text-white border border-zinc-700 px-2 py-0.5 rounded text-[10px]">Admin</button>
         </div>
     </nav>
 
@@ -47,8 +48,7 @@
             <p class="text-xs text-zinc-500 mt-1">Pre-order for delivery over the next 3 days</p>
         </div>
 
-        <div class="space-y-4" id="menu-container">
-            </div>
+        <div class="space-y-4" id="menu-container"></div>
 
         <div id="cart-sticky" class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-zinc-100 p-4 shadow-2xl hidden z-40">
             <div class="flex justify-between items-center mb-3">
@@ -69,26 +69,33 @@
             <h2 class="serif text-2xl font-bold text-[#0A2E24] mt-2">Complete Your Pre-Order</h2>
         </div>
 
-        <div class="bg-white p-5 rounded-2xl border border-zinc-100 shadow-sm space-y-6">
+        <div class="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm space-y-5">
             <div>
-                <label class="block text-xs uppercase tracking-wider font-bold text-zinc-600 mb-2">1. Choose Delivery Date</label>
-                <select id="delivery-date-select" class="w-full bg-zinc-50 border border-zinc-200 rounded-lg p-3 text-sm focus:outline-none focus:border-emerald-800">
-                    </select>
+                <label class="block text-xs uppercase tracking-wider font-bold text-zinc-500 mb-1.5">1. Choose Delivery Date</label>
+                <select id="delivery-date-select" class="w-full bg-zinc-50 border border-zinc-200 rounded-lg p-3 text-sm focus:outline-none focus:border-emerald-800"></select>
             </div>
 
-            <div class="space-y-4">
-                <label class="block text-xs uppercase tracking-wider font-bold text-zinc-600 -mb-2">2. Contact & Delivery Details</label>
+            <div class="space-y-4 pt-2 border-t border-zinc-100">
+                <label class="block text-xs uppercase tracking-wider font-bold text-zinc-500 mb-0">2. Contact & Delivery Details</label>
+                
                 <div>
-                    <input type="tel" id="user-phone" placeholder="Phone Number (e.g., 9876543210)" class="w-full bg-zinc-50 border border-zinc-200 rounded-lg p-3 text-sm focus:outline-none focus:border-emerald-800">
-                    <p class="text-[10px] text-zinc-400 mt-1">No password required. Device automatically stays logged in.</p>
+                    <label class="block text-[11px] text-zinc-400 mb-1 font-semibold">Full Name</label>
+                    <input type="text" id="user-name" placeholder="Enter your full name" class="w-full bg-zinc-50 border border-zinc-200 rounded-lg p-3 text-sm focus:outline-none focus:border-emerald-800">
                 </div>
+
                 <div>
-                    <textarea id="user-address" rows="3" placeholder="Full Delivery Address" class="w-full bg-zinc-50 border border-zinc-200 rounded-lg p-3 text-sm focus:outline-none focus:border-emerald-800"></textarea>
+                    <label class="block text-[11px] text-zinc-400 mb-1 font-semibold">Contact Number</label>
+                    <input type="tel" id="user-phone" placeholder="10-digit mobile number" class="w-full bg-zinc-50 border border-zinc-200 rounded-lg p-3 text-sm focus:outline-none focus:border-emerald-800">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] text-zinc-400 mb-1 font-semibold">Complete Address</label>
+                    <textarea id="user-address" rows="3" placeholder="Flat/House No, Building, Street, Area" class="w-full bg-zinc-50 border border-zinc-200 rounded-lg p-3 text-sm focus:outline-none focus:border-emerald-800"></textarea>
                 </div>
             </div>
 
             <div class="border-t border-zinc-100 pt-4">
-                <p class="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Order Summary</p>
+                <p class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Order Summary</p>
                 <div id="checkout-items-list" class="text-xs space-y-1 text-zinc-600"></div>
                 <div class="flex justify-between font-bold text-base text-zinc-900 mt-3 pt-2 border-t border-dashed border-zinc-200">
                     <span>Total Amount (Pay on Delivery)</span>
@@ -105,7 +112,7 @@
     <section id="customer-history" class="app-view max-w-md mx-auto p-4 hidden">
         <h2 class="serif text-2xl font-bold text-[#0A2E24] my-4">Your Order Dashboard</h2>
         <div id="history-login-warning" class="bg-amber-50 text-amber-900 border border-amber-200 p-4 rounded-xl text-xs hidden mb-4">
-            Please type your phone number to check order history.
+            Verify your identity by searching your contact number:
             <div class="flex gap-2 mt-2">
                 <input type="tel" id="history-phone-input" placeholder="Phone Number" class="bg-white p-1.5 border rounded text-xs w-full">
                 <button onclick="reloadHistoryFromInput()" class="bg-[#0A2E24] text-white px-3 py-1 rounded text-xs font-bold">Search</button>
@@ -116,38 +123,28 @@
         </div>
     </section>
 
-
     <section id="admin-view" class="app-view max-w-4xl mx-auto p-4 hidden">
         <div class="flex justify-between items-center border-b border-zinc-200 pb-4 mb-6">
             <div>
                 <h2 class="serif text-3xl font-bold text-[#0A2E24]">Master Admin Panel</h2>
-                <p class="text-xs text-zinc-500">Live order control and dynamic kitchen forecast</p>
+                <p class="text-xs text-zinc-500">Live kitchen control dashboard</p>
             </div>
-            <button onclick="switchView('delivery-view')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2 rounded-lg shadow">
-                Switch to Delivery View →
-            </button>
         </div>
-
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="md:col-span-2 space-y-4">
                 <h3 class="text-sm font-bold uppercase tracking-wider text-zinc-600 flex items-center justify-between">
                     Incoming Order Streams
                     <button onclick="loadAdminData()" class="text-xs lowercase font-normal text-emerald-800 underline">Refresh Queue</button>
                 </h3>
-                <div id="admin-queue-list" class="space-y-3">
-                    <p class="text-xs text-zinc-400">Loading master kitchen tracks...</p>
-                </div>
+                <div id="admin-queue-list" class="space-y-3"><p class="text-xs text-zinc-400">Loading master kitchen tracks...</p></div>
             </div>
-
             <div class="bg-white p-4 rounded-2xl border border-zinc-200 shadow-sm space-y-4 h-fit">
                 <h3 class="text-sm font-bold uppercase tracking-wider text-[#0A2E24]">🍳 Kitchen Prep Forecast</h3>
                 <div>
                     <label class="block text-[10px] uppercase text-zinc-400 font-bold mb-1">Target Production Date</label>
-                    <select id="admin-forecast-date" onchange="runKitchenForecast()" class="w-full bg-zinc-50 border border-zinc-200 rounded p-2 text-xs font-semibold focus:outline-none">
-                        </select>
+                    <select id="admin-forecast-date" onchange="runKitchenForecast()" class="w-full bg-zinc-50 border border-zinc-200 rounded p-2 text-xs font-semibold focus:outline-none"></select>
                 </div>
-                <div class="border-t border-zinc-100 pt-3 space-y-2" id="kitchen-summary-box">
-                    </div>
+                <div class="border-t border-zinc-100 pt-3 space-y-2" id="kitchen-summary-box"></div>
             </div>
         </div>
     </section>
@@ -156,81 +153,101 @@
         <div class="flex justify-between items-center border-b border-zinc-200 pb-4 mb-4">
             <div>
                 <h2 class="serif text-2xl font-bold text-indigo-950">Rider Dispatch Terminal</h2>
-                <p class="text-xs text-zinc-500">Collect cash and manage door-to-door delivery validation</p>
+                <p class="text-xs text-zinc-500">Log cash updates and handle delivery verification status</p>
             </div>
-            <button onclick="loadDeliveryData()" class="bg-zinc-100 border text-zinc-700 text-xs font-bold px-3 py-1.5 rounded">
-                Refresh Listings
-            </button>
+            <button onclick="loadDeliveryData()" class="bg-zinc-100 border text-zinc-700 text-xs font-bold px-3 py-1.5 rounded">Refresh Listings</button>
         </div>
-        <div id="delivery-queue-list" class="space-y-3">
-            <p class="text-xs text-zinc-400">Pulling global dispatch schedule...</p>
-        </div>
+        <div id="delivery-queue-list" class="space-y-3"><p class="text-xs text-zinc-400">Pulling global dispatch schedule...</p></div>
     </section>
 
     <script>
-        // --- Core Lifecycle Initializations ---
         window.addEventListener('DOMContentLoaded', () => {
             initMenu();
             initDateSelectors();
+            checkUrlParametersForSecureRoutes(); // Check for ?pane=admin or ?pane=delivery
+            
             if(userProfile) {
-                document.getElementById('user-phone').value = userProfile.phone || '';
-                document.getElementById('user-address').value = userProfile.address || '';
+                if(document.getElementById('user-name') && userProfile.name) document.getElementById('user-name').value = userProfile.name;
+                if(document.getElementById('user-phone') && userProfile.phone) document.getElementById('user-phone').value = userProfile.phone;
+                if(document.getElementById('user-address') && userProfile.address) document.getElementById('user-address').value = userProfile.address;
             }
         });
 
+        // --- Routing Protection Checks ---
+        function checkUrlParametersForSecureRoutes() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const pane = urlParams.get('pane');
+
+            if (pane === 'admin') {
+                let pin = prompt("Enter Admin Authentication PIN:");
+                if (pin === ADMIN_PIN) {
+                    switchView('admin-view');
+                    loadAdminData();
+                } else {
+                    alert("Unauthorized access code.");
+                    window.location.href = window.location.pathname; // Boot them back to user storefront
+                }
+            } else if (pane === 'delivery') {
+                let pin = prompt("Enter Rider Access PIN:");
+                if (pin === DELIVERY_PIN) {
+                    switchView('delivery-view');
+                    loadDeliveryData();
+                } else {
+                    alert("Unauthorized access code.");
+                    window.location.href = window.location.pathname;
+                }
+            } else {
+                switchView('customer-menu');
+            }
+        }
+
         function switchView(viewId) {
             document.querySelectorAll('.app-view').forEach(view => view.classList.add('hidden'));
-            document.getElementById(viewId).classList.remove('hidden');
+            const destination = document.getElementById(viewId);
+            if(destination) destination.classList.remove('hidden');
             window.scrollTo(0,0);
         }
 
-        // --- Render Customer Menu Interface ---
         function initMenu() {
             const container = document.getElementById('menu-container');
             container.innerHTML = MENU.map(item => `
-                <div class="bg-white p-4 rounded-2xl border border-zinc-100 shadow-sm flex justify-between items-center transition hover:shadow-md">
+                <div class="bg-white p-4 rounded-2xl border border-zinc-200 shadow-sm flex justify-between items-center">
                     <div class="max-w-[70%]">
                         <h3 class="serif font-bold text-base text-[#0A2E24]">${item.name}</h3>
                         <p class="text-xs text-zinc-400 mt-1 leading-relaxed">${item.desc}</p>
                         <p class="text-sm font-bold text-amber-800 mt-2">₹${item.price}</p>
                     </div>
                     <div class="flex items-center gap-2 bg-zinc-50 border border-zinc-200 px-2 py-1.5 rounded-xl">
-                        <button onclick="updateCart('${item.name}', -1)" class="w-6 h-6 rounded-full bg-white border border-zinc-200 flex items-center justify-center font-bold text-xs text-zinc-600 hover:bg-zinc-100">-</button>
+                        <button onclick="updateCart('${item.name}', -1)" class="w-6 h-6 rounded-full bg-white border border-zinc-200 flex items-center justify-center font-bold text-xs text-zinc-600">-</button>
                         <span id="qty-${btoa(item.name).replace(/=/g,'')}" class="w-6 text-center text-xs font-bold">0</span>
-                        <button onclick="updateCart('${item.name}', 1)" class="w-6 h-6 rounded-full bg-[#0A2E24] text-white flex items-center justify-center font-bold text-xs hover:bg-emerald-950">+</button>
+                        <button onclick="updateCart('${item.name}', 1)" class="w-6 h-6 rounded-full bg-[#0A2E24] text-white flex items-center justify-center font-bold text-xs">+</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        // Compute valid window: strictly next 3 days (excluding today)
         function initDateSelectors() {
             const selectCheckout = document.getElementById('delivery-date-select');
             const selectAdmin = document.getElementById('admin-forecast-date');
-            
             let optionsHtml = "";
             for(let i=1; i<=3; i++) {
                 let d = new Date();
                 d.setDate(d.getDate() + i);
-                let dateString = d.toISOString().split('T')[0]; // YYYY-MM-DD
+                let dateString = d.toISOString().split('T')[0];
                 let humanReadable = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
                 optionsHtml += `<option value="${dateString}">${humanReadable}</option>`;
             }
             selectCheckout.innerHTML = optionsHtml;
-            selectAdmin.innerHTML = optionsHtml;
+            if(selectAdmin) selectAdmin.innerHTML = optionsHtml;
         }
 
-        // --- Cart Operational Math ---
         function updateCart(itemName, change) {
             if(!cart[itemName]) cart[itemName] = 0;
             cart[itemName] += change;
             if(cart[itemName] <= 0) delete cart[itemName];
-
-            // Render updated number counts to selectors
             const elementId = "qty-" + btoa(itemName).replace(/=/g,'');
             const targetSpan = document.getElementById(elementId);
             if(targetSpan) targetSpan.innerText = cart[itemName] || 0;
-
             calculateCartTotals();
         }
 
@@ -238,7 +255,6 @@
             let totalItemCount = 0;
             let totalPrice = 0;
             let summaryItemsHtml = "";
-
             for(let name in cart) {
                 let match = MENU.find(m => m.name === name);
                 if(match) {
@@ -247,7 +263,6 @@
                     summaryItemsHtml += `<div class="flex justify-between"><span>${name} × ${cart[name]}</span><span>₹${match.price * cart[name]}</span></div>`;
                 }
             }
-
             const stickyBar = document.getElementById('cart-sticky');
             if(totalItemCount > 0) {
                 stickyBar.classList.remove('hidden');
@@ -255,45 +270,42 @@
             } else {
                 stickyBar.classList.add('hidden');
             }
-
             document.getElementById('checkout-items-list').innerHTML = summaryItemsHtml || "<p class='text-zinc-400'>Cart empty</p>";
             document.getElementById('checkout-total-amt').innerText = "₹" + totalPrice;
         }
 
-        // --- Network Action: Submit Order ---
+        // --- Submit Order with Robust Validation Layout ---
         function submitOrder() {
+            const name = document.getElementById('user-name').value.trim();
             const phone = document.getElementById('user-phone').value.trim();
             const address = document.getElementById('user-address').value.trim();
             const deliveryDate = document.getElementById('delivery-date-select').value;
             
-            if(!phone || !address) {
-                alert("Please fill your mobile connection mapping and delivery address.");
-                return;
-            }
+            // Comprehensive Input Fields Validations
+            if(!name) { alert("Validation Error: Name field cannot be empty."); return; }
+            if(!phone) { alert("Validation Error: Contact number cannot be empty."); return; }
+            if(!/^\d{10}$/.test(phone)) { alert("Validation Error: Please enter a valid 10-digit mobile phone number."); return; }
+            if(!address) { alert("Validation Error: Delivery address field cannot be empty."); return; }
             
             let totalAmount = 0;
             for(let name in cart) {
                 let match = MENU.find(m => m.name === name);
                 if(match) totalAmount += (match.price * cart[name]);
             }
-
-            if(totalAmount === 0) {
-                alert("Cart is empty.");
-                return;
-            }
+            if(totalAmount === 0) { alert("Cart validation error: Add sandwiches before processing."); return; }
 
             const btn = document.getElementById('btn-submit-order');
             btn.disabled = true;
             btn.innerText = "Processing Logistics Entry...";
 
-            // Auto log session memory cache logic
-            const sessionData = { phone: phone, address: address };
+            // Combine details with name included into storage footprint
+            const sessionData = { name: name, phone: phone, address: address };
             localStorage.setItem('sandwich_user', JSON.stringify(sessionData));
             userProfile = sessionData;
 
             const payload = {
                 action: "placeOrder",
-                phone: phone,
+                phone: `${name} (${phone})`, // Passing name coupled inside phone logs seamlessly without altering Sheets columns
                 address: address,
                 deliveryDate: deliveryDate,
                 items: cart,
@@ -302,31 +314,26 @@
 
             fetch(API_URL, {
                 method: "POST",
-                mode: "no-cors", // API engine network architecture compatibility bypass
+                mode: "no-cors",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             })
             .then(() => {
-                alert(`Order Logged Successfully for ${deliveryDate}! Saved profile logs data to device.`);
-                // Reset fields cleanly
+                alert(`Order Logged Successfully for ${deliveryDate}!`);
                 cart = {};
                 initMenu();
                 calculateCartTotals();
-                switchView('customer-history');
                 openHistory();
                 btn.disabled = false;
                 btn.innerText = "Place Order";
             })
             .catch(err => {
                 console.error(err);
-                alert("Synchronization sequence dropped. Check sheet credentials script layout context.");
+                alert("Synchronization dropped.");
                 btn.disabled = false;
                 btn.innerText = "Place Order";
             });
         }
-
-        // --- Fetch & View User Order History Terminal ---
-        let globalOrdersCache = []; // Master data cache store locally for instant metrics evaluation
 
         function openHistory() {
             switchView('customer-history');
@@ -341,7 +348,7 @@
         function reloadHistoryFromInput() {
             const phone = document.getElementById('history-phone-input').value.trim();
             if(!phone) return;
-            userProfile = { phone: phone, address: "" };
+            userProfile = { name: "", phone: phone, address: "" };
             localStorage.setItem('sandwich_user', JSON.stringify(userProfile));
             document.getElementById('history-login-warning').classList.add('hidden');
             fetchAndRenderHistory(phone);
@@ -349,22 +356,25 @@
 
         function fetchAndRenderHistory(phone) {
             const container = document.getElementById('orders-history-list');
-            container.innerHTML = `<p class="text-xs text-zinc-400 text-center py-6">Loading delivery ledgers from database...</p>`;
+            container.innerHTML = `<p class="text-xs text-zinc-400 text-center py-6">Loading delivery ledgers...</p>`;
 
-            fetch(`${API_URL}?action=getOrders&phone=${phone}`)
+            fetch(`${API_URL}?action=getOrders`)
             .then(res => res.json())
             .then(res => {
                 if(res.success && res.data.length > 0) {
-                    container.innerHTML = res.data.map(order => {
+                    // Match clean phone string within name formatting field string entries
+                    const filtered = res.data.filter(order => String(order.Phone).includes(phone));
+                    if(filtered.length === 0) {
+                        container.innerHTML = `<p class="text-xs text-zinc-400 text-center py-6">No historical entries match this number tracking parameter.</p>`;
+                        return;
+                    }
+                    container.innerHTML = filtered.map(order => {
                         let parsedItems = {};
                         try { parsedItems = JSON.parse(order.ItemsOrdered); } catch(e){}
                         let textBreakdown = Object.entries(parsedItems).map(([k,v]) => `${k} (×${v})`).join(', ');
-                        
-                        // Rule: Only allow cancellation if explicitly in "Ordered" state status string
                         let cancelBtn = order.Status === "Ordered" 
                             ? `<button onclick="cancelUserOrder('${order.OrderID}')" class="mt-3 text-xs w-full bg-rose-50 text-rose-700 font-bold p-2 rounded border border-rose-100 hover:bg-rose-100 transition">Cancel This Order</button>` 
                             : '';
-
                         let statusColor = "bg-zinc-100 text-zinc-700";
                         if(order.Status === "Accepted") statusColor = "bg-emerald-100 text-emerald-800";
                         if(order.Status === "Delivered") statusColor = "bg-blue-100 text-blue-800";
@@ -387,10 +397,10 @@
                         `;
                     }).join('');
                 } else {
-                    container.innerHTML = `<p class="text-xs text-zinc-400 text-center py-6">No historical logs bound to this configuration.</p>`;
+                    container.innerHTML = `<p class="text-xs text-zinc-400 text-center py-6">No order logs found.</p>`;
                 }
             }).catch(() => {
-                container.innerHTML = `<p class="text-xs text-rose-600 text-center py-6">Database error linking records.</p>`;
+                container.innerHTML = `<p class="text-xs text-rose-600 text-center py-6">Database link connection index failure.</p>`;
             });
         }
 
@@ -399,48 +409,36 @@
             executeStatusChange(orderId, "Cancelled", () => openHistory());
         }
 
-        // --- ADMIN PORTAL INTERACTION LOGIC ---
-        function openAdmin() {
-            switchView('admin-view');
-            loadAdminData();
-        }
-
         function loadAdminData() {
             const queue = document.getElementById('admin-queue-list');
-            queue.innerHTML = `<p class="text-xs text-zinc-400">Syncing matrix files...</p>`;
-
+            queue.innerHTML = `<p class="text-xs text-zinc-400">Syncing database layers...</p>`;
             fetch(`${API_URL}?action=getOrders`)
             .then(res => res.json())
             .then(res => {
                 if(res.success) {
-                    globalOrdersCache = res.data; // Store globally inside engine memory cache
-                    runKitchenForecast();       // Execute local calculation pipeline
-                    
+                    globalOrdersCache = res.data;
+                    runKitchenForecast();
                     const pendingOrders = res.data.filter(o => o.Status === "Ordered");
                     if(pendingOrders.length === 0) {
-                        queue.innerHTML = `<p class="text-xs text-zinc-400 py-4 bg-zinc-50 border rounded-lg text-center">No current incoming orders needing attention.</p>`;
+                        queue.innerHTML = `<p class="text-xs text-zinc-400 py-4 bg-zinc-50 border rounded-lg text-center">No incoming orders require processing action lines.</p>`;
                         return;
                     }
-
                     queue.innerHTML = pendingOrders.map(order => {
                         let parsedItems = {};
                         try { parsedItems = JSON.parse(order.ItemsOrdered); } catch(e){}
                         let textBreakdown = Object.entries(parsedItems).map(([k,v]) => `${k} <span class="bg-zinc-100 px-1 rounded font-bold">×${v}</span>`).join(' & ');
-
                         return `
                             <div class="bg-white p-4 rounded-xl border border-zinc-200 shadow-sm text-xs flex justify-between items-start">
                                 <div class="space-y-1 max-w-[70%]">
-                                    <div class="flex items-center gap-2">
-                                        <span class="font-bold text-zinc-900">${order.OrderID}</span>
-                                        <span class="text-zinc-400 font-semibold">${order.Phone}</span>
-                                    </div>
+                                    <span class="font-bold text-zinc-900 block">${order.OrderID}</span>
+                                    <span class="text-zinc-500 font-semibold block mt-0.5">👤 Client: ${order.Phone}</span>
                                     <p class="text-zinc-700 text-sm mt-1 font-medium">${textBreakdown}</p>
-                                    <p class="text-zinc-500 text-[11px]">📍 Address: ${order.Address}</p>
-                                    <p class="text-emerald-900 font-bold text-[11px]">📅 Target: ${order.DeliveryDate} | Value: ₹${order.TotalAmount}</p>
+                                    <p class="text-zinc-500 text-[11px] mt-1">📍 Address: ${order.Address}</p>
+                                    <p class="text-emerald-900 font-bold text-[11px]">📅 Deliver Date: ${order.DeliveryDate} | Value: ₹${order.TotalAmount}</p>
                                 </div>
                                 <div class="flex flex-col gap-1 w-24">
-                                    <button onclick="changeOrderStatus('${order.OrderID}', 'Accepted')" class="bg-emerald-800 hover:bg-emerald-900 text-white font-bold p-1.5 rounded transition">Accept</button>
-                                    <button onclick="changeOrderStatus('${order.OrderID}', 'Rejected')" class="bg-zinc-100 hover:bg-rose-50 hover:text-rose-700 text-zinc-500 font-bold p-1.5 rounded border transition">Reject</button>
+                                    <button onclick="changeOrderStatus('${order.OrderID}', 'Accepted')" class="bg-emerald-800 hover:bg-emerald-900 text-white font-bold p-1.5 rounded text-xs transition">Accept</button>
+                                    <button onclick="changeOrderStatus('${order.OrderID}', 'Rejected')" class="bg-zinc-100 text-zinc-500 font-bold p-1.5 rounded border text-xs transition">Reject</button>
                                 </div>
                             </div>
                         `;
@@ -449,12 +447,9 @@
             });
         }
 
-        // --- Kitchen Aggregation Prediction Module ---
         function runKitchenForecast() {
             const targetDate = document.getElementById('admin-forecast-date').value;
             const summaryBox = document.getElementById('kitchen-summary-box');
-            
-            // Clean initial count state dictionary 
             let totals = {
                 "Spinach N Corn Sandwich": 0,
                 "Veg Coleslaw Sandwich": 0,
@@ -462,21 +457,14 @@
                 "Chicken Salami Sandwich": 0,
                 "Chicken Sandwich": 0
             };
-
-            // Loop and count from current offline local storage index mapping cache
             globalOrdersCache.forEach(order => {
                 if(order.DeliveryDate === targetDate && (order.Status === "Ordered" || order.Status === "Accepted")) {
                     try {
                         let items = JSON.parse(order.ItemsOrdered);
-                        for(let name in items) {
-                            if(totals.hasOwnProperty(name)) {
-                                totals[name] += Number(items[name]);
-                            }
-                        }
+                        for(let name in items) { if(totals.hasOwnProperty(name)) totals[name] += Number(items[name]); }
                     } catch(e){}
                 }
             });
-
             summaryBox.innerHTML = Object.entries(totals).map(([item, qty]) => `
                 <div class="flex justify-between items-center bg-zinc-50 p-2.5 rounded-lg border border-zinc-100 text-xs">
                     <span class="font-semibold text-zinc-700">${item}</span>
@@ -489,27 +477,22 @@
             executeStatusChange(orderId, newStatus, () => loadAdminData());
         }
 
-        // --- DELIVERY PORTAL LOGIC OPERATIONS ---
         function loadDeliveryData() {
-            switchView('delivery-view');
             const list = document.getElementById('delivery-queue-list');
-            list.innerHTML = `<p class="text-xs text-zinc-400">Loading route files...</p>`;
-
+            list.innerHTML = `<p class="text-xs text-zinc-400">Loading route profiles...</p>`;
             fetch(`${API_URL}?action=getOrders`)
             .then(res => res.json())
             .then(res => {
                 if(res.success) {
                     const activeDeliveries = res.data.filter(o => o.Status === "Accepted");
                     if(activeDeliveries.length === 0) {
-                        list.innerHTML = `<p class="text-xs text-zinc-400 text-center py-8">All clear. No accepted sandwiches active out for courier logistics.</p>`;
+                        list.innerHTML = `<p class="text-xs text-zinc-400 text-center py-8">All clear. No deliveries active.</p>`;
                         return;
                     }
-
                     list.innerHTML = activeDeliveries.map(order => {
                         let parsedItems = {};
                         try { parsedItems = JSON.parse(order.ItemsOrdered); } catch(e){}
                         let textBreakdown = Object.entries(parsedItems).map(([k,v]) => `${k} (×${v})`).join(', ');
-
                         return `
                             <div class="bg-white p-4 rounded-xl border-l-4 border-indigo-600 border-y border-r border-zinc-200 shadow-sm text-xs space-y-2">
                                 <div class="flex justify-between font-bold text-zinc-900">
@@ -518,13 +501,13 @@
                                 </div>
                                 <p class="font-medium text-zinc-700">${textBreakdown}</p>
                                 <div class="bg-zinc-50 p-2 rounded text-zinc-600 space-y-1 text-[11px]">
-                                    <p><strong>Call:</strong> <a href="tel:${order.Phone}" class="text-indigo-600 underline font-bold">${order.Phone}</a></p>
+                                    <p><strong>Customer:</strong> ${order.Phone}</p>
                                     <p><strong>Address:</strong> ${order.Address}</p>
-                                    <p><strong>Delivery Date Match:</strong> ${order.DeliveryDate}</p>
+                                    <p><strong>Date:</strong> ${order.DeliveryDate}</p>
                                 </div>
                                 <div class="grid grid-cols-2 gap-2 pt-1">
                                     <button onclick="executeStatusChange('${order.OrderID}', 'Delivered', () => loadDeliveryData())" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2 rounded">✓ Paid & Delivered</button>
-                                    <button onclick="executeStatusChange('${order.OrderID}', 'Refused', () => loadDeliveryData())" class="bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 font-bold py-2 rounded">❌ Refused Delivery</button>
+                                    <button onclick="executeStatusChange('${order.OrderID}', 'Refused', () => loadDeliveryData())" class="bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 font-bold py-2 rounded">❌ Refused</button>
                                 </div>
                             </div>
                         `;
@@ -533,7 +516,6 @@
             });
         }
 
-        // --- Master Network Pipeline Mutation Core Wrapper ---
         function executeStatusChange(orderId, status, callback) {
             const payload = { action: "updateStatus", orderId: orderId, status: status };
             fetch(API_URL, {
@@ -542,11 +524,11 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             }).then(() => {
-                alert(`Order marked as: ${status}`);
+                alert(`Status successfully committed: ${status}`);
                 callback();
             }).catch(err => {
                 console.error(err);
-                alert("Network handshake dropped state write modification.");
+                alert("Database state modification error.");
             });
         }
     </script>

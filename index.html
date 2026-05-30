@@ -527,6 +527,21 @@
             document.getElementById('delivery-queue-list').innerHTML = `<p class="text-xs text-zinc-400">Loading route files...</p>`;
             requestDatabaseQuery({ action: "getOrders" }, "handleDeliveryDataResponse");
         }
+        // Automatically look for background database updates every 15 seconds
+setInterval(() => {
+    if (currentActivePane === 'admin-view') {
+        // Silently pull fresh orders and update the kitchen list
+        requestDatabaseQuery({ action: "getOrders" }, "handleAdminDataResponse");
+    } else if (currentActivePane === 'delivery-view') {
+        // Silently pull fresh dispatch routes for riders
+        requestDatabaseQuery({ action: "getOrders" }, "handleDeliveryDataResponse");
+    } else if (currentActivePane === 'customer-history') {
+        // Silently pull fresh data and update the customer's dashboard in real-time
+        if (userProfile && userProfile.phone) {
+            requestDatabaseQuery({ action: "getOrders" }, "handleHistoryDataResponse");
+        }
+    }
+}, 15000); // 15 seconds loop
     </script>
 </body>
 </html>

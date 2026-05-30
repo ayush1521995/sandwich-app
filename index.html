@@ -30,14 +30,15 @@
         let cart = {};
         let userProfile = JSON.parse(localStorage.getItem('sandwich_user_v2')) || null;
         let globalOrdersCache = [];
+        let currentActivePane = 'customer-menu';
     </script>
 
     <nav class="bg-[#052219] text-[#F3EDE4] px-6 py-4 sticky top-0 z-50 shadow-sm flex justify-between items-center border-b border-emerald-950/40">
-        <div onclick="switchView('customer-menu')" class="cursor-pointer">
-            <h1 class="serif text-xl md:text-2xl font-bold tracking-wide">The Cold Press</h1>
-            <p class="text-[9px] uppercase tracking-widest text-amber-400 font-medium -mt-1">Crafted Cold Delicatessen</p>
+        <div onclick="returnToMainStorefront()" class="cursor-pointer">
+            <h1 class="serif text-xl md:text-2xl font-bold tracking-wide" id="nav-main-title">The Cold Press</h1>
+            <p class="text-[9px] uppercase tracking-widest text-amber-400 font-medium -mt-1" id="nav-subtitle">Crafted Cold Delicatessen</p>
         </div>
-        <div class="flex gap-5 text-xs tracking-wider uppercase font-medium">
+        <div class="flex gap-5 text-xs tracking-wider uppercase font-medium" id="nav-links-container">
             <button onclick="switchView('customer-menu')" class="hover:text-amber-300 transition">Menu</button>
             <button onclick="openHistory()" class="hover:text-amber-300 transition">My Dashboard</button>
         </div>
@@ -157,17 +158,47 @@
     </section>
 
     <script>
-        // --- View Switching Layout Handler (Moved to Top of Scope) ---
         function switchView(viewId) {
+            currentActivePane = viewId;
             document.querySelectorAll('.app-view').forEach(view => view.classList.add('hidden'));
             const destination = document.getElementById(viewId);
-            if(destination) {
-                destination.classList.remove('hidden');
-            }
+            if(destination) destination.classList.remove('hidden');
             window.scrollTo(0,0);
+            updateNavbarDesignUI(viewId); // Automatically change header layout based on active page
         }
 
-        // --- Core Initializer Hooks ---
+        // Adjust navigation titles and visibility based on routing perspective
+        function updateNavbarDesignUI(viewId) {
+            const title = document.getElementById('nav-main-title');
+            const subtitle = document.getElementById('nav-subtitle');
+            const linksBox = document.getElementById('nav-links-container');
+
+            if(viewId === 'admin-view') {
+                title.innerText = "The Cold Press Hub";
+                subtitle.innerText = "🛡️ CORE KITCHEN ADMIN CONTROL";
+                linksBox.innerHTML = `<button onclick="loadAdminData()" class="text-amber-400 font-bold tracking-wide">🔄 Reload Active Queue</button>`;
+            } else if (viewId === 'delivery-view') {
+                title.innerText = "Rider Terminal";
+                subtitle.innerText = "🚴 LOGISTICS DISPATCH SYSTEM";
+                linksBox.innerHTML = `<button onclick="loadDeliveryData()" class="text-indigo-300 font-bold tracking-wide">🔄 Refresh Deliveries</button>`;
+            } else {
+                title.innerText = "The Cold Press";
+                subtitle.innerText = "Crafted Cold Delicatessen";
+                linksBox.innerHTML = `
+                    <button onclick="switchView('customer-menu')" class="hover:text-amber-300 transition">Menu</button>
+                    <button onclick="openHistory()" class="hover:text-amber-300 transition">My Dashboard</button>
+                `;
+            }
+        }
+
+        function returnToMainStorefront() {
+            // Safe boot trigger back to vendor landing screen
+            const urlParams = new URLSearchParams(window.location.search);
+            if(!urlParams.get('pane')) {
+                switchView('customer-menu');
+            }
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             initMenu();
             initDateSelectors();
@@ -188,17 +219,145 @@
             return dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
         }
 
-        function setStatusSilent(orderId, status, onFinishedCallback) {
+        function requestDatabaseQuery(params, callbackName) {
+            const oldScript = document.getElementById('api-transport-script');
+            if(oldScript) oldScript.remove();
+
+            const script = document.createElement('script');
+            script.id = 'api-transport-script';
+            
+            const queryUrl = new URL(API_URL);
+            for(let key in params) { queryUrl.searchParams.append(key, params[key]); }
+            queryUrl.searchParams.append('prefix', callbackName);
+
+            script.src = queryUrl.toString();
+            document.body.appendChild(script);
+        }
+
+        // --- FIXED: Instant Automated Local State Refresh Pipelines ---
+        function changeStatusAndTriggerAutomatedRefresh(orderId, status, viewRefreshFunction) {
+            // 1. Instantly target and hide element locally so user gets snappy feedback
             const payload = { action: "updateStatus", orderId: orderId, status: status };
+            
+            // 2. Transmit pipeline change to sheet matrix row
             fetch(API_URL, {
                 method: "POST",
                 mode: "no-cors",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             }).then(() => {
-                onFinishedCallback();
-            }).catch(err => console.error("Mutation failure sync dropped:", err));
+                // 3. Automated trigger pulls records fresh from backend after 400ms buffer window
+                setTimeout(() => {
+                    viewRefreshFunction();
+                }, 400);
+            }).catch(err => console.error(err));
         }
+
+        window.handleAdminDataResponse = function(response) {
+            const queue = document.getElementById('admin-queue-list');
+            if(!response || !response.success) {
+                queue.innerHTML = `<p class="text-xs text-rose-600 text-center py-6">Failed syncing database layers.</p>`;
+                return;
+            }
+            globalOrdersCache = response.data || [];
+            runKitchenForecast();
+            const pendingOrders = globalOrdersCache.filter(o => o.Status === "Ordered");
+            if(pendingOrders.length === 0) {
+                queue.innerHTML = `<p class="text-xs text-zinc-400 py-6 bg-zinc-50 border rounded-2xl text-center">All clear. No unresolved incoming orders.</p>`;
+                return;
+            }
+            queue.innerHTML = pendingOrders.map(order => {
+                let itemsMap = order.ItemsBreakdown || {};
+                let textBreakdown = Object.entries(itemsMap).map(([k,v]) => `${k} <span class="bg-zinc-100 text-zinc-800 px-1.5 py-0.5 rounded font-bold">×${v}</span>`).join(' & ');
+                return `
+                    <div class="bg-white p-5 rounded-2xl border border-zinc-200 text-xs flex justify-between items-start shadow-sm animate-fade-in">
+                        <div class="space-y-1.5 max-w-[70%]">
+                            <span class="font-mono text-zinc-400 font-bold block uppercase tracking-wider">${order.OrderID}</span>
+                            <span class="text-zinc-800 font-bold block text-sm">👤 ${order.CustomerName || 'Customer'} (${order.Phone})</span>
+                            <p class="text-zinc-700 text-xs mt-2 font-medium">${textBreakdown || 'No items listed'}</p>
+                            <p class="text-zinc-400 text-[11px] mt-1">📍 Address: ${order.Address}</p>
+                            <p class="text-emerald-950 font-bold text-[11px] mt-2 bg-emerald-50 w-fit px-2 py-0.5 rounded-md">📅 Target: ${formatHumanDate(order.DeliveryDate)} | Value: ₹${order.TotalAmount}</p>
+                        </div>
+                        <div class="flex flex-col gap-2 w-24">
+                            <button onclick="changeStatusAndTriggerAutomatedRefresh('${order.OrderID}', 'Accepted', () => loadAdminData())" class="bg-[#052219] text-white font-bold py-2 rounded-xl text-xs hover:bg-emerald-950 shadow-sm transition-all">Accept</button>
+                            <button onclick="changeStatusAndTriggerAutomatedRefresh('${order.OrderID}', 'Rejected', () => loadAdminData())" class="bg-zinc-50 text-zinc-500 font-bold py-2 rounded-xl border text-xs hover:bg-rose-50 hover:text-rose-700 transition-all">Reject</button>
+                        </div>
+                    </div>`;
+            }).join('');
+        };
+
+        window.handleHistoryDataResponse = function(response) {
+            const container = document.getElementById('orders-history-list');
+            if(!response || !response.success) {
+                container.innerHTML = `<p class="text-xs text-rose-600 text-center py-6">Database link connection error.</p>`;
+                return;
+            }
+            const phone = userProfile ? userProfile.phone : '';
+            const filtered = (response.data || []).filter(order => String(order.Phone) === String(phone));
+            if(filtered.length === 0) {
+                container.innerHTML = `<p class="text-xs text-zinc-400 text-center py-6">No matching logs setup.</p>`;
+                return;
+            }
+            container.innerHTML = filtered.map(order => {
+                let itemsMap = order.ItemsBreakdown || {};
+                let textBreakdown = Object.entries(itemsMap).map(([k,v]) => `${k} (×${v})`).join(', ');
+                let cancelBtn = order.Status === "Ordered" ? `<button onclick="changeStatusAndTriggerAutomatedRefresh('${order.OrderID}', 'Cancelled', () => openHistory())" class="mt-3 text-xs w-full bg-rose-50 text-rose-700 font-bold p-2 rounded-xl border border-rose-100 hover:bg-rose-100 transition">Cancel This Request</button>` : '';
+                let statusColor = "bg-zinc-100 text-zinc-600";
+                if(order.Status === "Accepted") statusColor = "bg-emerald-100 text-emerald-800";
+                if(order.Status === "Delivered") statusColor = "bg-blue-100 text-blue-800";
+                if(order.Status === "Rejected" || order.Status === "Cancelled" || order.Status === "Refused") statusColor = "bg-rose-100 text-rose-700";
+
+                return `
+                    <div class="bg-white p-5 rounded-2xl border border-zinc-200/60 shadow-sm text-xs">
+                        <div class="flex justify-between font-bold items-center border-b border-zinc-100 pb-2 mb-2">
+                            <span class="text-zinc-400 uppercase font-mono tracking-wider">${order.OrderID}</span>
+                            <span class="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold tracking-wider ${statusColor}">${order.Status}</span>
+                        </div>
+                        <p class="font-bold text-sm text-zinc-800 mb-2">${textBreakdown || 'No items processing'}</p>
+                        <div class="text-[11px] text-zinc-500 space-y-1">
+                            <p><strong>Deliver To:</strong> ${order.Address}</p>
+                            <p><strong>Scheduled Window:</strong> ${formatHumanDate(order.DeliveryDate)}</p>
+                            <p class="font-bold text-zinc-900 text-xs mt-2 pt-1 border-t border-zinc-100">Total Price Due: ₹${order.TotalAmount}</p>
+                        </div>
+                        ${cancelBtn}
+                    </div>`;
+            }).join('');
+        };
+
+        window.handleDeliveryDataResponse = function(response) {
+            const list = document.getElementById('delivery-queue-list');
+            if(!response || !response.success) {
+                list.innerHTML = `<p class="text-xs text-rose-600 text-center py-8">Failed syncing dispatch routes.</p>`;
+                return;
+            }
+            const activeDeliveries = (response.data || []).filter(o => o.Status === "Accepted");
+            if(activeDeliveries.length === 0) {
+                list.innerHTML = `<p class="text-xs text-zinc-400 text-center py-8">All clear. No accepted orders out for delivery.</p>`;
+                return;
+            }
+            list.innerHTML = activeDeliveries.map(order => {
+                let itemsMap = order.ItemsBreakdown || {};
+                let textBreakdown = Object.entries(itemsMap).map(([k,v]) => `${k} (×${v})`).join(', ');
+                return `
+                    <div class="bg-white p-5 rounded-2xl border-l-4 border-emerald-800 shadow-sm text-xs space-y-2 animate-fade-in">
+                        <div class="flex justify-between font-bold text-zinc-900 text-sm">
+                            <span>${order.OrderID}</span>
+                            <span class="text-emerald-900">COD Due: ₹${order.TotalAmount}</span>
+                        </div>
+                        <p class="font-bold text-zinc-800">${textBreakdown || 'No items active'}</p>
+                        <div class="bg-zinc-50 p-3 rounded-xl text-zinc-600 space-y-1 text-[11px] font-medium">
+                            <p><strong>Customer:</strong> ${order.CustomerName || 'Unknown'}</p>
+                            <p><strong>Call Line:</strong> <a href="tel:${order.Phone}" class="text-emerald-800 underline font-bold">${order.Phone}</a></p>
+                            <p><strong>Address:</strong> ${order.Address}</p>
+                            <p><strong>Date:</strong> ${formatHumanDate(order.DeliveryDate)}</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 pt-1">
+                            <button onclick="changeStatusAndTriggerAutomatedRefresh('${order.OrderID}', 'Delivered', () => loadDeliveryData())" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 rounded-xl">✓ Paid & Delivered</button>
+                            <button onclick="changeStatusAndTriggerAutomatedRefresh('${order.OrderID}', 'Refused', () => loadDeliveryData())" class="bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 font-bold py-2.5 rounded-xl">❌ Refused</button>
+                        </div>
+                    </div>`;
+            }).join('');
+        };
 
         function checkUrlParametersForSecureRoutes() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -231,8 +390,7 @@
                         <span id="qty-${btoa(item.name).replace(/=/g,'')}" class="w-6 text-center text-xs font-bold text-zinc-700">0</span>
                         <button onclick="updateCart('${item.name}', 1)" class="w-7 h-7 rounded-lg bg-[#052219] text-white flex items-center justify-center font-bold text-xs hover:bg-emerald-950 shadow-sm">+</button>
                     </div>
-                </div>
-            `).join('');
+                </div>`).join('');
         }
 
         function initDateSelectors() {
@@ -313,9 +471,8 @@
                 openHistory();
             }).catch(err => {
                 console.error(err);
-                alert("Network out of synchronization. Try again.");
-                btn.disabled = false;
-                btn.innerText = "Confirm Pre-Order";
+                alert("Network link offline. Retry submission.");
+                btn.disabled = false; btn.innerText = "Confirm Pre-Order";
             });
         }
 
@@ -326,94 +483,22 @@
                 return;
             }
             document.getElementById('history-login-warning').classList.add('hidden');
-            fetchAndRenderHistory(userProfile.phone);
+            document.getElementById('orders-history-list').innerHTML = `<p class="text-xs text-zinc-400 text-center py-6">Pulling order index history...</p>`;
+            requestDatabaseQuery({ action: "getOrders" }, "handleHistoryDataResponse");
         }
 
         function reloadHistoryFromInput() {
             const phone = document.getElementById('history-phone-input').value.trim();
-            if(!phone) return;
-            userProfile = { name: "", phone: phone, address: "" };
+            if(!phone || !/^\d{10}$/.test(phone)) { alert("Enter a valid 10-digit number."); return; }
+            userProfile = { name: "User", phone: phone, address: "" };
             localStorage.setItem('sandwich_user_v2', JSON.stringify(userProfile));
             document.getElementById('history-login-warning').classList.add('hidden');
-            fetchAndRenderHistory(phone);
-        }
-
-        function fetchAndRenderHistory(phone) {
-            const container = document.getElementById('orders-history-list');
-            container.innerHTML = `<p class="text-xs text-zinc-400 text-center py-6">Pulling order index history...</p>`;
-            fetch(`${API_URL}?action=getOrders`)
-            .then(res => res.json())
-            .then(res => {
-                if(res.success && res.data.length > 0) {
-                    const filtered = res.data.filter(order => String(order.Phone) === String(phone));
-                    if(filtered.length === 0) {
-                        container.innerHTML = `<p class="text-xs text-zinc-400 text-center py-6">No matching logs setup.</p>`;
-                        return;
-                    }
-                    container.innerHTML = filtered.map(order => {
-                        let textBreakdown = Object.entries(order.ItemsBreakdown).map(([k,v]) => `${k} (×${v})`).join(', ');
-                        let cancelBtn = order.Status === "Ordered" ? `<button onclick="executeStatusChange('${order.OrderID}', 'Cancelled', () => openHistory())" class="mt-3 text-xs w-full bg-rose-50 text-rose-700 font-bold p-2 rounded-xl border border-rose-100 hover:bg-rose-100 transition">Cancel This Request</button>` : '';
-                        let statusColor = "bg-zinc-100 text-zinc-600";
-                        if(order.Status === "Accepted") statusColor = "bg-emerald-100 text-emerald-800";
-                        if(order.Status === "Delivered") statusColor = "bg-blue-100 text-blue-800";
-                        if(order.Status === "Rejected" || order.Status === "Cancelled" || order.Status === "Refused") statusColor = "bg-rose-100 text-rose-700";
-
-                        return `
-                            <div class="bg-white p-5 rounded-2xl border border-zinc-200/60 shadow-sm text-xs">
-                                <div class="flex justify-between font-bold items-center border-b border-zinc-100 pb-2 mb-2">
-                                    <span class="text-zinc-400 uppercase font-mono tracking-wider">${order.OrderID}</span>
-                                    <span class="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold tracking-wider ${statusColor}">${order.Status}</span>
-                                </div>
-                                <p class="font-bold text-sm text-zinc-800 mb-2">${textBreakdown}</p>
-                                <div class="text-[11px] text-zinc-500 space-y-1">
-                                    <p><strong>Deliver To:</strong> ${order.Address}</p>
-                                    <p><strong>Scheduled Window:</strong> ${formatHumanDate(order.DeliveryDate)}</p>
-                                    <p class="font-bold text-zinc-900 text-xs mt-2 pt-1 border-t border-zinc-100">Total Price Due: ₹${order.TotalAmount}</p>
-                                </div>
-                                ${cancelBtn}
-                            </div>
-                        `;
-                    }).join('');
-                } else {
-                    container.innerHTML = `<p class="text-xs text-zinc-400 text-center py-6">No order logs found.</p>`;
-                }
-            });
+            openHistory();
         }
 
         function loadAdminData() {
-            const queue = document.getElementById('admin-queue-list');
-            queue.innerHTML = `<p class="text-xs text-zinc-400">Syncing live tracks...</p>`;
-            fetch(`${API_URL}?action=getOrders`)
-            .then(res => res.json())
-            .then(res => {
-                if(res.success) {
-                    globalOrdersCache = res.data;
-                    runKitchenForecast();
-                    const pendingOrders = res.data.filter(o => o.Status === "Ordered");
-                    if(pendingOrders.length === 0) {
-                        queue.innerHTML = `<p class="text-xs text-zinc-400 py-6 bg-zinc-50 border rounded-2xl text-center">All clear. No unresolved incoming orders.</p>`;
-                        return;
-                    }
-                    queue.innerHTML = pendingOrders.map(order => {
-                        let textBreakdown = Object.entries(order.ItemsBreakdown).map(([k,v]) => `${k} <span class="bg-zinc-100 text-zinc-800 px-1.5 py-0.5 rounded font-bold">×${v}</span>`).join(' & ');
-                        return `
-                            <div class="bg-white p-5 rounded-2xl border border-zinc-200 text-xs flex justify-between items-start shadow-sm">
-                                <div class="space-y-1.5 max-w-[70%]">
-                                    <span class="font-mono text-zinc-400 font-bold block uppercase tracking-wider">${order.OrderID}</span>
-                                    <span class="text-zinc-800 font-bold block text-sm">👤 ${order.CustomerName} (${order.Phone})</span>
-                                    <p class="text-zinc-700 text-xs mt-2 font-medium">${textBreakdown}</p>
-                                    <p class="text-zinc-400 text-[11px] mt-1">📍 Address: ${order.Address}</p>
-                                    <p class="text-emerald-950 font-bold text-[11px] mt-2 bg-emerald-50 w-fit px-2 py-0.5 rounded-md">📅 Target: ${formatHumanDate(order.DeliveryDate)} | Value: ₹${order.TotalAmount}</p>
-                                </div>
-                                <div class="flex flex-col gap-2 w-24">
-                                    <button onclick="setStatusSilent('${order.OrderID}', 'Accepted', () => loadAdminData())" class="bg-[#052219] text-white font-bold py-2 rounded-xl text-xs hover:bg-emerald-950 shadow-sm transition-all">Accept</button>
-                                    <button onclick="setStatusSilent('${order.OrderID}', 'Rejected', () => loadAdminData())" class="bg-zinc-50 text-zinc-500 font-bold py-2 rounded-xl border text-xs hover:bg-rose-50 hover:text-rose-700 transition-all">Reject</button>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-                }
-            });
+            document.getElementById('admin-queue-list').innerHTML = `<p class="text-xs text-zinc-400">Syncing live tracks...</p>`;
+            requestDatabaseQuery({ action: "getOrders" }, "handleAdminDataResponse");
         }
 
         function runKitchenForecast() {
@@ -422,10 +507,12 @@
             let totals = { "Spinach N Corn Sandwich": 0, "Veg Coleslaw Sandwich": 0, "Veg Green salad sandwich": 0, "Chicken Salami Sandwich": 0, "Chicken Sandwich": 0 };
             
             globalOrdersCache.forEach(order => {
-                let cleanOrderDate = order.DeliveryDate ? order.DeliveryDate.split('T')[0] : '';
+                if(!order.DeliveryDate) return;
+                let cleanOrderDate = order.DeliveryDate.split('T')[0];
                 if(cleanOrderDate === targetDate && (order.Status === "Ordered" || order.Status === "Accepted")) {
-                    for(let name in order.ItemsBreakdown) {
-                        if(totals.hasOwnProperty(name)) totals[name] += Number(order.ItemsBreakdown[name]);
+                    let itemsMap = order.ItemsBreakdown || {};
+                    for(let name in itemsMap) {
+                        if(totals.hasOwnProperty(name)) totals[name] += Number(itemsMap[name]);
                     }
                 }
             });
@@ -433,50 +520,12 @@
                 <div class="flex justify-between items-center bg-zinc-50 p-3 rounded-xl border border-zinc-100 text-xs font-medium">
                     <span class="text-zinc-700">${item}</span>
                     <span class="${qty > 0 ? 'bg-[#052219] text-white' : 'bg-zinc-200 text-zinc-400'} font-bold px-3 py-1 rounded-lg text-xs min-w-[34px] text-center">${qty}</span>
-                </div>
-            `).join('');
+                </div>`).join('');
         }
 
         function loadDeliveryData() {
-            const list = document.getElementById('delivery-queue-list');
-            list.innerHTML = `<p class="text-xs text-zinc-400">Loading route files...</p>`;
-            fetch(`${API_URL}?action=getOrders`)
-            .then(res => res.json())
-            .then(res => {
-                if(res.success) {
-                    const activeDeliveries = res.data.filter(o => o.Status === "Accepted");
-                    if(activeDeliveries.length === 0) {
-                        list.innerHTML = `<p class="text-xs text-zinc-400 text-center py-8">All clear. No accepted orders out for delivery.</p>`;
-                        return;
-                    }
-                    list.innerHTML = activeDeliveries.map(order => {
-                        let textBreakdown = Object.entries(order.ItemsBreakdown).map(([k,v]) => `${k} (×${v})`).join(', ');
-                        return `
-                            <div class="bg-white p-5 rounded-2xl border-l-4 border-emerald-800 shadow-sm text-xs space-y-2">
-                                <div class="flex justify-between font-bold text-zinc-900 text-sm">
-                                    <span>${order.OrderID}</span>
-                                    <span class="text-emerald-900">COD Due: ₹${order.TotalAmount}</span>
-                                </div>
-                                <p class="font-bold text-zinc-800">${textBreakdown}</p>
-                                <div class="bg-zinc-50 p-3 rounded-xl text-zinc-600 space-y-1 text-[11px] font-medium">
-                                    <p><strong>Customer:</strong> ${order.CustomerName}</p>
-                                    <p><strong>Call Line:</strong> <a href="tel:${order.Phone}" class="text-emerald-800 underline font-bold">${order.Phone}</a></p>
-                                    <p><strong>Address:</strong> ${order.Address}</p>
-                                    <p><strong>Date:</strong> ${formatHumanDate(order.DeliveryDate)}</p>
-                                </div>
-                                <div class="grid grid-cols-2 gap-2 pt-1">
-                                    <button onclick="setStatusSilent('${order.OrderID}', 'Delivered', () => loadDeliveryData())" class="bg-emerald-800 hover:bg-emerald-900 text-white font-bold py-2.5 rounded-xl">✓ Paid & Delivered</button>
-                                    <button onclick="setStatusSilent('${order.OrderID}', 'Refused', () => loadDeliveryData())" class="bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 font-bold py-2.5 rounded-xl">❌ Refused</button>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-                }
-            });
-        }
-
-        function executeStatusChange(orderId, status, callback) {
-            setStatusSilent(orderId, status, callback);
+            document.getElementById('delivery-queue-list').innerHTML = `<p class="text-xs text-zinc-400">Loading route files...</p>`;
+            requestDatabaseQuery({ action: "getOrders" }, "handleDeliveryDataResponse");
         }
     </script>
 </body>

@@ -9,6 +9,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght@300..700&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8F7F4; }
         .serif { font-family: 'Playfair Display', serif; }
+        .order-card-hide { opacity: 0; transform: scale(0.95); transition: all 0.3s ease-out; }
     </style>
 </head>
 <body class="text-zinc-800 selection:bg-emerald-100">
@@ -33,6 +34,7 @@
         let currentActivePane = 'customer-menu';
     </script>
 
+    <!-- LIVE NAVBAR -->
     <nav class="bg-[#052219] text-[#F3EDE4] px-6 py-4 sticky top-0 z-50 shadow-sm flex justify-between items-center border-b border-emerald-950/40">
         <div onclick="returnToMainStorefront()" class="cursor-pointer">
             <h1 class="serif text-xl md:text-2xl font-bold tracking-wide" id="nav-main-title">The Cold Press</h1>
@@ -44,6 +46,7 @@
         </div>
     </nav>
 
+    <!-- CUSTOMER VIEW: MENU -->
     <section id="customer-menu" class="app-view max-w-lg mx-auto p-4 pb-32">
         <div class="my-8 text-center px-4">
             <h2 class="serif text-3xl md:text-4xl font-semibold text-[#052219] tracking-tight">Today's Fresh Prep</h2>
@@ -52,6 +55,7 @@
 
         <div class="space-y-4" id="menu-container"></div>
 
+        <!-- Sticky Floating Footer Bar -->
         <div id="cart-sticky" class="fixed bottom-4 left-4 right-4 max-w-md mx-auto bg-[#052219] text-white p-4 rounded-2xl shadow-xl hidden z-40 transform transition-all duration-300">
             <div class="flex justify-between items-center">
                 <div>
@@ -65,6 +69,7 @@
         </div>
     </section>
 
+    <!-- CUSTOMER VIEW: CHECKOUT -->
     <section id="checkout-step" class="app-view max-w-md mx-auto p-4 hidden">
         <div class="mb-6">
             <button onclick="switchView('customer-menu')" class="text-xs text-emerald-800 font-bold tracking-wide flex items-center gap-1">← Modify Selected Items</button>
@@ -72,30 +77,35 @@
         </div>
 
         <div class="bg-white p-6 rounded-3xl border border-zinc-200/60 shadow-sm space-y-5">
-            <div>
-                <label class="block text-[11px] uppercase tracking-wider font-bold text-zinc-400 mb-1.5">1. Delivery Date Selection</label>
-                <select id="delivery-date-select" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-3 text-sm font-medium text-zinc-700 focus:outline-none focus:ring-1 focus:ring-emerald-800"></select>
-            </div>
-
-            <div class="space-y-4 pt-3 border-t border-zinc-100">
-                <label class="block text-[11px] uppercase tracking-wider font-bold text-zinc-400">2. Customer Profile Identification</label>
-                
+            <!-- Customer Details First -->
+            <div class="space-y-4">
+                <label class="block text-[11px] uppercase tracking-wider font-bold text-zinc-400">1. Customer Profile Identification</label>
                 <div>
                     <input type="text" id="user-name" placeholder="Recipient's Name" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-3 text-sm focus:outline-none focus:border-emerald-800">
                 </div>
-
                 <div>
                     <input type="tel" id="user-phone" placeholder="10-Digit Mobile Number" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-3 text-sm focus:outline-none focus:border-emerald-800">
                 </div>
-
                 <div>
                     <textarea id="user-address" rows="3" placeholder="Dropoff Address Details (House / Flat, Landmark)" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-3 text-sm focus:outline-none focus:border-emerald-800"></textarea>
                 </div>
             </div>
 
+            <!-- Highly Highlighted Date Selection Below Profile -->
+            <div class="bg-amber-50 border-2 border-amber-400/70 p-4 rounded-2xl space-y-2">
+                <label class="block text-xs uppercase tracking-wider font-black text-amber-950 flex items-center gap-1">
+                    📅 2. Mandatory Delivery Date Choice
+                </label>
+                <select id="delivery-date-select" class="w-full bg-white border border-amber-300 rounded-xl p-3 text-sm font-bold text-amber-950 focus:outline-none focus:ring-2 focus:ring-emerald-800">
+                    <!-- Standard options injected with empty default state -->
+                </select>
+                <p class="text-[10px] text-amber-800 font-semibold">⚠️ Notice: Orders are pre-assembled chilled. Same-day dispatch is unavailable.</p>
+            </div>
+
+            <!-- Itemized Checkout Block -->
             <div class="border-t border-zinc-100 pt-4 bg-zinc-50/50 p-4 rounded-xl">
                 <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Item Summary Block</p>
-                <div id="checkout-items-list" class="text-xs space-y-1.5 text-zinc-600 font-medium"></div>
+                <div id="checkout-items-list" class="space-y-2 text-xs font-medium text-zinc-700"></div>
                 <div class="flex justify-between font-bold text-base text-zinc-900 mt-3 pt-3 border-t border-dashed border-zinc-200">
                     <span>Cash on Delivery Due</span>
                     <span id="checkout-total-amt" class="text-[#052219]">₹0</span>
@@ -108,6 +118,7 @@
         </div>
     </section>
 
+    <!-- CUSTOMER DASHBOARD & HISTORY -->
     <section id="customer-history" class="app-view max-w-md mx-auto p-4 hidden">
         <h2 class="serif text-2xl font-bold text-[#052219] my-5">Your Booking Dashboard</h2>
         <div id="history-login-warning" class="bg-amber-50 text-amber-900 border border-amber-200 p-4 rounded-2xl text-xs hidden mb-4">
@@ -120,23 +131,29 @@
         <div id="orders-history-list" class="space-y-4"></div>
     </section>
 
-    <section id="admin-view" class="app-view max-w-5xl mx-auto p-6 hidden">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-zinc-200 pb-4 mb-6 gap-4">
-            <div>
-                <h2 class="serif text-3xl font-bold text-[#052219]">Kitchen Control Center</h2>
-                <p class="text-xs text-zinc-500">Live request streams and automated ingredient count metrics</p>
-            </div>
-        </div>
+    <!-- ADMIN PANEL VIEW -->
+    <section id="admin-view" class="app-view max-w-6xl mx-auto p-6 hidden">
+        <!-- Live Counters Analytics Metrics Grid Bar -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6" id="admin-counters-bar"></div>
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Active Pending Stream -->
             <div class="lg:col-span-2 space-y-4">
-                <h3 class="text-xs font-bold uppercase tracking-widest text-zinc-400 flex items-center justify-between">
-                    Live Booking Log
-                    <button onclick="loadAdminData()" class="text-xs font-semibold text-emerald-800 underline">Sync Live Queue</button>
+                <h3 class="text-xs font-bold uppercase tracking-widest text-[#052219] bg-emerald-50 w-fit px-2.5 py-1 rounded-md">
+                    📥 Live Incoming Request Streams
                 </h3>
                 <div id="admin-queue-list" class="space-y-3"></div>
+                
+                <!-- Archival Auditing Log Panel -->
+                <div class="pt-6 border-t border-zinc-200 mt-8">
+                    <h4 class="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-3">🗄️ Historical Archive Ledger</h4>
+                    <div id="admin-archive-list" class="space-y-2 opacity-70"></div>
+                </div>
             </div>
+            
+            <!-- Kitchen Prep Box -->
             <div class="bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-sm space-y-4 h-fit">
-                <h3 class="text-sm font-bold text-[#052219] flex items-center gap-1">🍳 Kitchen Production Target</h3>
+                <h3 class="text-sm font-bold text-[#052219] flex items-center gap-1">🍳 Kitchen Production Forecast</h3>
                 <div>
                     <label class="block text-[10px] uppercase text-zinc-400 font-bold mb-1">Target Production Window</label>
                     <select id="admin-forecast-date" onchange="runKitchenForecast()" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-2.5 text-xs font-bold text-zinc-700 focus:outline-none"></select>
@@ -146,63 +163,94 @@
         </div>
     </section>
 
-    <section id="delivery-view" class="app-view max-w-xl mx-auto p-4 hidden">
-        <div class="flex justify-between items-center border-b border-zinc-200 pb-4 mb-5">
-            <div>
-                <h2 class="serif text-2xl font-bold text-zinc-900">Rider Terminal</h2>
-                <p class="text-xs text-zinc-400">Doorstep billing validation ledger</p>
-            </div>
-            <button onclick="loadDeliveryData()" class="bg-zinc-100 border text-zinc-700 text-xs font-bold px-3 py-1.5 rounded-xl">Refresh Data</button>
+    <!-- RIDER DISPATCH VIEW -->
+    <section id="delivery-view" class="app-view max-w-2xl mx-auto p-4 hidden">
+        <!-- Rider Analytics Header counters -->
+        <div class="grid grid-cols-3 gap-2 mb-4 text-center text-xs" id="delivery-counters-bar"></div>
+
+        <div class="border-b border-zinc-200 pb-3 mb-4 flex justify-between items-center">
+            <h2 class="serif text-xl font-bold text-zinc-900">Active Routing Dispatches</h2>
+            <button onclick="loadDeliveryData()" class="text-xs underline text-emerald-800">Forced Sync</button>
         </div>
         <div id="delivery-queue-list" class="space-y-3"></div>
+
+        <!-- Completed Courier Archive Logs -->
+        <div class="pt-6 mt-8 border-t border-zinc-200">
+            <h4 class="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-3">📦 Completed Dispatch Deliveries (Today)</h4>
+            <div id="delivery-archive-list" class="space-y-2 opacity-70"></div>
+        </div>
     </section>
 
+    <!-- MASTER CORE SYSTEM ENGINE -->
     <script>
+        // --- Router State Engine (Bypass refresh view drops) ---
         function switchView(viewId) {
             currentActivePane = viewId;
             document.querySelectorAll('.app-view').forEach(view => view.classList.add('hidden'));
             const destination = document.getElementById(viewId);
             if(destination) destination.classList.remove('hidden');
-            window.scrollTo(0,0);
-            updateNavbarDesignUI(viewId); // Automatically change header layout based on active page
+            
+            // Set URL location tracking parameter hash footprint
+            window.location.hash = viewId;
+            updateNavbarDesignUI(viewId);
         }
 
-        // Adjust navigation titles and visibility based on routing perspective
         function updateNavbarDesignUI(viewId) {
             const title = document.getElementById('nav-main-title');
             const subtitle = document.getElementById('nav-subtitle');
             const linksBox = document.getElementById('nav-links-container');
 
             if(viewId === 'admin-view') {
-                title.innerText = "The Cold Press Hub";
-                subtitle.innerText = "🛡️ CORE KITCHEN ADMIN CONTROL";
-                linksBox.innerHTML = `<button onclick="loadAdminData()" class="text-amber-400 font-bold tracking-wide">🔄 Reload Active Queue</button>`;
+                title.innerText = "The Cold Press Hub"; subtitle.innerText = "🛡️ KITCHEN ADMIN CONTROL";
+                linksBox.innerHTML = `<button onclick="loadAdminData()" class="text-amber-400 font-bold tracking-wide">🔄 Sync Now</button>`;
             } else if (viewId === 'delivery-view') {
-                title.innerText = "Rider Terminal";
-                subtitle.innerText = "🚴 LOGISTICS DISPATCH SYSTEM";
-                linksBox.innerHTML = `<button onclick="loadDeliveryData()" class="text-indigo-300 font-bold tracking-wide">🔄 Refresh Deliveries</button>`;
+                title.innerText = "Rider Terminal"; subtitle.innerText = "🚴 DISPATCH MANAGEMENT";
+                linksBox.innerHTML = `<button onclick="loadDeliveryData()" class="text-indigo-300 font-bold tracking-wide">🔄 Sync Now</button>`;
             } else {
-                title.innerText = "The Cold Press";
-                subtitle.innerText = "Crafted Cold Delicatessen";
+                title.innerText = "The Cold Press"; subtitle.innerText = "Crafted Cold Delicatessen";
                 linksBox.innerHTML = `
                     <button onclick="switchView('customer-menu')" class="hover:text-amber-300 transition">Menu</button>
-                    <button onclick="openHistory()" class="hover:text-amber-300 transition">My Dashboard</button>
-                `;
+                    <button onclick="openHistory()" class="hover:text-amber-300 transition">My Dashboard</button>`;
             }
         }
 
         function returnToMainStorefront() {
-            // Safe boot trigger back to vendor landing screen
             const urlParams = new URLSearchParams(window.location.search);
-            if(!urlParams.get('pane')) {
-                switchView('customer-menu');
-            }
+            if(!urlParams.get('pane')) { switchView('customer-menu'); }
         }
 
+        // --- Multi-Row Table Item Generator Utility ---
+        function generateItemTableHTML(itemsMap, useFlexSeparators = true) {
+            if(!itemsMap || Object.keys(itemsMap).length === 0) return `<p class="text-zinc-400 italic">No structural items listed.</p>`;
+            
+            return `<div class="space-y-1.5 font-medium border-y border-zinc-100 py-2.5 my-2">` + 
+                Object.entries(itemsMap).map(([name, qty]) => `
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-zinc-800 font-semibold">${name}</span>
+                        <div class="flex-grow mx-2 border-b border-dotted border-zinc-200"></div>
+                        <span class="bg-zinc-100 px-2 py-0.5 rounded text-zinc-900 font-black text-right min-w-[28px]">×${qty}</span>
+                    </div>
+                `).join('') + `</div>`;
+        }
+
+        // --- Core Application Boot Lifecycles ---
         window.addEventListener('DOMContentLoaded', () => {
             initMenu();
             initDateSelectors();
-            checkUrlParametersForSecureRoutes(); 
+            
+            // Check for persistent location parameter hashes
+            const activeHash = window.location.hash.replace('#', '');
+            const urlParams = new URLSearchParams(window.location.search);
+            const pane = urlParams.get('pane');
+
+            if (pane === 'admin' || pane === 'delivery') {
+                checkUrlParametersForSecureRoutes(pane);
+            } else if(activeHash && document.getElementById(activeHash)) {
+                switchView(activeHash);
+                if(activeHash === 'customer-history') openHistory();
+            } else {
+                switchView('customer-menu');
+            }
             
             if(userProfile) {
                 if(document.getElementById('user-name') && userProfile.name) document.getElementById('user-name').value = userProfile.name;
@@ -228,92 +276,131 @@
             
             const queryUrl = new URL(API_URL);
             for(let key in params) { queryUrl.searchParams.append(key, params[key]); }
+            
+            // CRUCIAL: Append Cache-Busting signature to unfreeze background timer loops
+            queryUrl.searchParams.append('_t', new Date().getTime());
             queryUrl.searchParams.append('prefix', callbackName);
 
             script.src = queryUrl.toString();
             document.body.appendChild(script);
         }
 
-        // --- FIXED: Instant Automated Local State Refresh Pipelines ---
-        function changeStatusAndTriggerAutomatedRefresh(orderId, status, viewRefreshFunction) {
-            // 1. Instantly target and hide element locally so user gets snappy feedback
-            const payload = { action: "updateStatus", orderId: orderId, status: status };
-            
-            // 2. Transmit pipeline change to sheet matrix row
-            fetch(API_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            }).then(() => {
-                // 3. Automated trigger pulls records fresh from backend after 400ms buffer window
-                setTimeout(() => {
-                    viewRefreshFunction();
-                }, 400);
-            }).catch(err => console.error(err));
+        // --- Automated Dashboard Metric Computation Engine ---
+        function buildDashboardAnalyticsWidgets(orders, containerId) {
+            const container = document.getElementById(containerId);
+            if(!container) return;
+
+            let metrics = { Ordered: 0, Accepted: 0, Delivered: 0, Rejected: 0, Refused: 0, Cancelled: 0 };
+            orders.forEach(o => { if(metrics.hasOwnProperty(o.Status)) metrics[o.Status]++; });
+
+            const layouts = [
+                { title: "Incoming", count: metrics.Ordered, style: "bg-amber-50 text-amber-800 border-amber-200" },
+                { title: "Accepted", count: metrics.Accepted, style: "bg-emerald-50 text-emerald-800 border-emerald-200" },
+                { title: "Delivered", count: metrics.Delivered, style: "bg-blue-50 text-blue-800 border-blue-200" },
+                { title: "Rejected", count: metrics.Rejected, style: "bg-zinc-100 text-zinc-500 border-zinc-200" },
+                { title: "Refused / Cancel", count: (metrics.Refused + metrics.Cancelled), style: "bg-rose-50 text-rose-800 border-rose-200" }
+            ];
+
+            container.innerHTML = layouts.map(l => `
+                <div class="p-3 bg-white border rounded-xl text-center shadow-sm ${l.style}">
+                    <p class="text-[10px] uppercase font-bold tracking-wider opacity-60">${l.title}</p>
+                    <p class="text-xl font-black mt-0.5">${l.count}</p>
+                </div>
+            `).join('');
         }
 
+        // --- Optimistic State Refresh Processing Matrix ---
+        function executeOptimisticStatusChange(orderId, status, cardDomId) {
+            const targetCard = document.getElementById(cardDomId);
+            if(targetCard) {
+                targetCard.classList.add('order-card-hide');
+                setTimeout(() => targetCard.remove(), 300);
+            }
+
+            let cachedOrder = globalOrdersCache.find(o => o.OrderID === orderId);
+            if(cachedOrder) {
+                cachedOrder.Status = status; 
+                runKitchenForecast();
+                // Rerender administrative dashboards counters dynamically without refreshing
+                if(currentActivePane === 'admin-view') buildDashboardAnalyticsWidgets(globalOrdersCache, 'admin-counters-bar');
+                if(currentActivePane === 'delivery-view') buildDashboardAnalyticsWidgets(globalOrdersCache, 'delivery-counters-bar');
+            }
+
+            const payload = { action: "updateStatus", orderId: orderId, status: status };
+            fetch(API_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
+            .catch(err => console.error(err));
+        }
+
+        // --- DATA RESPONSE ROUTING CORE PIPELINES ---
         window.handleAdminDataResponse = function(response) {
-            const queue = document.getElementById('admin-queue-list');
-            if(!response || !response.success) {
-                queue.innerHTML = `<p class="text-xs text-rose-600 text-center py-6">Failed syncing database layers.</p>`;
-                return;
-            }
+            if(!response || !response.success) return;
             globalOrdersCache = response.data || [];
+            
+            buildDashboardAnalyticsWidgets(globalOrdersCache, 'admin-counters-bar');
             runKitchenForecast();
-            const pendingOrders = globalOrdersCache.filter(o => o.Status === "Ordered");
-            if(pendingOrders.length === 0) {
+
+            const pending = globalOrdersCache.filter(o => o.Status === "Ordered");
+            const archive = globalOrdersCache.filter(o => o.Status !== "Ordered");
+
+            // Render live stream
+            const queue = document.getElementById('admin-queue-list');
+            if(pending.length === 0) {
                 queue.innerHTML = `<p class="text-xs text-zinc-400 py-6 bg-zinc-50 border rounded-2xl text-center">All clear. No unresolved incoming orders.</p>`;
-                return;
+            } else {
+                queue.innerHTML = pending.map(order => {
+                    const cardId = `admin-card-${order.OrderID}`;
+                    return `
+                        <div id="${cardId}" class="bg-white p-5 rounded-2xl border border-zinc-200 text-xs shadow-sm flex flex-col md:flex-row justify-between md:items-center gap-4">
+                            <div class="space-y-1 w-full md:max-w-[70%]">
+                                <span class="font-mono text-zinc-400 font-bold block tracking-wider">${order.OrderID}</span>
+                                <span class="text-zinc-800 font-bold block text-sm">👤 ${order.CustomerName} (${order.Phone})</span>
+                                ${generateItemTableHTML(order.ItemsBreakdown)}
+                                <p class="text-zinc-400 text-[11px]">📍 Address: ${order.Address}</p>
+                                <p class="text-emerald-950 font-bold text-[11px] mt-1 bg-emerald-50 w-fit px-2 py-0.5 rounded-md">📅 Target: ${formatHumanDate(order.DeliveryDate)} | Value: ₹${order.TotalAmount}</p>
+                            </div>
+                            <div class="flex flex-row md:flex-col gap-2 min-w-[100px]">
+                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Accepted', '${cardId}')" class="w-full bg-[#052219] text-white font-bold py-2 rounded-xl text-xs hover:bg-emerald-950">Accept</button>
+                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Rejected', '${cardId}')" class="w-full bg-zinc-50 text-zinc-500 font-bold py-2 rounded-xl border text-xs hover:bg-rose-50 hover:text-rose-700">Reject</button>
+                            </div>
+                        </div>`;
+                }).join('');
             }
-            queue.innerHTML = pendingOrders.map(order => {
-                let itemsMap = order.ItemsBreakdown || {};
-                let textBreakdown = Object.entries(itemsMap).map(([k,v]) => `${k} <span class="bg-zinc-100 text-zinc-800 px-1.5 py-0.5 rounded font-bold">×${v}</span>`).join(' & ');
-                return `
-                    <div class="bg-white p-5 rounded-2xl border border-zinc-200 text-xs flex justify-between items-start shadow-sm animate-fade-in">
-                        <div class="space-y-1.5 max-w-[70%]">
-                            <span class="font-mono text-zinc-400 font-bold block uppercase tracking-wider">${order.OrderID}</span>
-                            <span class="text-zinc-800 font-bold block text-sm">👤 ${order.CustomerName || 'Customer'} (${order.Phone})</span>
-                            <p class="text-zinc-700 text-xs mt-2 font-medium">${textBreakdown || 'No items listed'}</p>
-                            <p class="text-zinc-400 text-[11px] mt-1">📍 Address: ${order.Address}</p>
-                            <p class="text-emerald-950 font-bold text-[11px] mt-2 bg-emerald-50 w-fit px-2 py-0.5 rounded-md">📅 Target: ${formatHumanDate(order.DeliveryDate)} | Value: ₹${order.TotalAmount}</p>
-                        </div>
-                        <div class="flex flex-col gap-2 w-24">
-                            <button onclick="changeStatusAndTriggerAutomatedRefresh('${order.OrderID}', 'Accepted', () => loadAdminData())" class="bg-[#052219] text-white font-bold py-2 rounded-xl text-xs hover:bg-emerald-950 shadow-sm transition-all">Accept</button>
-                            <button onclick="changeStatusAndTriggerAutomatedRefresh('${order.OrderID}', 'Rejected', () => loadAdminData())" class="bg-zinc-50 text-zinc-500 font-bold py-2 rounded-xl border text-xs hover:bg-rose-50 hover:text-rose-700 transition-all">Reject</button>
-                        </div>
-                    </div>`;
-            }).join('');
+
+            // Render historical archive log list
+            document.getElementById('admin-archive-list').innerHTML = archive.slice(0, 8).map(o => `
+                <div class="flex justify-between bg-white px-4 py-2 border rounded-xl text-xs items-center">
+                    <span><strong>${o.OrderID}</strong> • ${o.CustomerName}</span>
+                    <span class="font-bold uppercase tracking-wider text-[10px]">${o.Status}</span>
+                </div>
+            `).join('');
         };
 
         window.handleHistoryDataResponse = function(response) {
             const container = document.getElementById('orders-history-list');
-            if(!response || !response.success) {
-                container.innerHTML = `<p class="text-xs text-rose-600 text-center py-6">Database link connection error.</p>`;
-                return;
-            }
+            if(!response || !response.success) return;
+            globalOrdersCache = response.data || [];
             const phone = userProfile ? userProfile.phone : '';
-            const filtered = (response.data || []).filter(order => String(order.Phone) === String(phone));
+            const filtered = globalOrdersCache.filter(order => String(order.Phone) === String(phone));
+            
             if(filtered.length === 0) {
                 container.innerHTML = `<p class="text-xs text-zinc-400 text-center py-6">No matching logs setup.</p>`;
                 return;
             }
             container.innerHTML = filtered.map(order => {
-                let itemsMap = order.ItemsBreakdown || {};
-                let textBreakdown = Object.entries(itemsMap).map(([k,v]) => `${k} (×${v})`).join(', ');
-                let cancelBtn = order.Status === "Ordered" ? `<button onclick="changeStatusAndTriggerAutomatedRefresh('${order.OrderID}', 'Cancelled', () => openHistory())" class="mt-3 text-xs w-full bg-rose-50 text-rose-700 font-bold p-2 rounded-xl border border-rose-100 hover:bg-rose-100 transition">Cancel This Request</button>` : '';
+                const cardId = `user-card-${order.OrderID}`;
+                let cancelBtn = order.Status === "Ordered" ? `<button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Cancelled', '${cardId}')" class="mt-3 text-xs w-full bg-rose-50 text-rose-700 font-bold p-2 rounded-xl border border-rose-100 hover:bg-rose-100 transition">Cancel This Request</button>` : '';
                 let statusColor = "bg-zinc-100 text-zinc-600";
                 if(order.Status === "Accepted") statusColor = "bg-emerald-100 text-emerald-800";
                 if(order.Status === "Delivered") statusColor = "bg-blue-100 text-blue-800";
                 if(order.Status === "Rejected" || order.Status === "Cancelled" || order.Status === "Refused") statusColor = "bg-rose-100 text-rose-700";
 
                 return `
-                    <div class="bg-white p-5 rounded-2xl border border-zinc-200/60 shadow-sm text-xs">
+                    <div id="${cardId}" class="bg-white p-5 rounded-2xl border border-zinc-200/60 shadow-sm text-xs transition-all duration-300">
                         <div class="flex justify-between font-bold items-center border-b border-zinc-100 pb-2 mb-2">
                             <span class="text-zinc-400 uppercase font-mono tracking-wider">${order.OrderID}</span>
                             <span class="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold tracking-wider ${statusColor}">${order.Status}</span>
                         </div>
-                        <p class="font-bold text-sm text-zinc-800 mb-2">${textBreakdown || 'No items processing'}</p>
+                        ${generateItemTableHTML(order.ItemsBreakdown)}
                         <div class="text-[11px] text-zinc-500 space-y-1">
                             <p><strong>Deliver To:</strong> ${order.Address}</p>
                             <p><strong>Scheduled Window:</strong> ${formatHumanDate(order.DeliveryDate)}</p>
@@ -326,57 +413,62 @@
 
         window.handleDeliveryDataResponse = function(response) {
             const list = document.getElementById('delivery-queue-list');
-            if(!response || !response.success) {
-                list.innerHTML = `<p class="text-xs text-rose-600 text-center py-8">Failed syncing dispatch routes.</p>`;
-                return;
+            if(!response || !response.success) return;
+            globalOrdersCache = response.data || [];
+            
+            buildDashboardAnalyticsWidgets(globalOrdersCache, 'delivery-counters-bar');
+
+            const active = globalOrdersCache.filter(o => o.Status === "Accepted");
+            const finished = globalOrdersCache.filter(o => o.Status === "Delivered" || o.Status === "Refused");
+
+            if(active.length === 0) {
+                list.innerHTML = `<p class="text-xs text-zinc-400 text-center py-8">All clear. No accepted orders out for courier delivery.</p>`;
+            } else {
+                list.innerHTML = active.map(order => {
+                    const cardId = `delivery-card-${order.OrderID}`;
+                    return `
+                        <div id="${cardId}" class="bg-white p-5 rounded-2xl border-l-4 border-emerald-800 shadow-sm text-xs space-y-2 transition-all duration-300">
+                            <div class="flex justify-between font-bold text-zinc-900 text-sm">
+                                <span>${order.OrderID}</span>
+                                <span class="text-emerald-900">COD Due: ₹${order.TotalAmount}</span>
+                            </div>
+                            ${generateItemTableHTML(order.ItemsBreakdown)}
+                            <div class="bg-zinc-50 p-3 rounded-xl text-zinc-600 space-y-1 text-[11px] font-medium">
+                                <p><strong>Customer:</strong> ${order.CustomerName}</p>
+                                <p><strong>Call Line:</strong> <a href="tel:${order.Phone}" class="text-emerald-800 underline font-bold">${order.Phone}</a></p>
+                                <p><strong>Address:</strong> ${order.Address}</p>
+                                <p><strong>Date:</strong> ${formatHumanDate(order.DeliveryDate)}</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 pt-1">
+                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Delivered', '${cardId}')" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 rounded-xl">✓ Paid & Delivered</button>
+                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Refused', '${cardId}')" class="bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 font-bold py-2.5 rounded-xl">❌ Refused</button>
+                            </div>
+                        </div>`;
+                }).join('');
             }
-            const activeDeliveries = (response.data || []).filter(o => o.Status === "Accepted");
-            if(activeDeliveries.length === 0) {
-                list.innerHTML = `<p class="text-xs text-zinc-400 text-center py-8">All clear. No accepted orders out for delivery.</p>`;
-                return;
-            }
-            list.innerHTML = activeDeliveries.map(order => {
-                let itemsMap = order.ItemsBreakdown || {};
-                let textBreakdown = Object.entries(itemsMap).map(([k,v]) => `${k} (×${v})`).join(', ');
-                return `
-                    <div class="bg-white p-5 rounded-2xl border-l-4 border-emerald-800 shadow-sm text-xs space-y-2 animate-fade-in">
-                        <div class="flex justify-between font-bold text-zinc-900 text-sm">
-                            <span>${order.OrderID}</span>
-                            <span class="text-emerald-900">COD Due: ₹${order.TotalAmount}</span>
-                        </div>
-                        <p class="font-bold text-zinc-800">${textBreakdown || 'No items active'}</p>
-                        <div class="bg-zinc-50 p-3 rounded-xl text-zinc-600 space-y-1 text-[11px] font-medium">
-                            <p><strong>Customer:</strong> ${order.CustomerName || 'Unknown'}</p>
-                            <p><strong>Call Line:</strong> <a href="tel:${order.Phone}" class="text-emerald-800 underline font-bold">${order.Phone}</a></p>
-                            <p><strong>Address:</strong> ${order.Address}</p>
-                            <p><strong>Date:</strong> ${formatHumanDate(order.DeliveryDate)}</p>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2 pt-1">
-                            <button onclick="changeStatusAndTriggerAutomatedRefresh('${order.OrderID}', 'Delivered', () => loadDeliveryData())" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 rounded-xl">✓ Paid & Delivered</button>
-                            <button onclick="changeStatusAndTriggerAutomatedRefresh('${order.OrderID}', 'Refused', () => loadDeliveryData())" class="bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 font-bold py-2.5 rounded-xl">❌ Refused</button>
-                        </div>
-                    </div>`;
-            }).join('');
+
+            document.getElementById('delivery-archive-list').innerHTML = finished.slice(0, 6).map(o => `
+                <div class="flex justify-between bg-white px-3 py-1.5 border rounded-xl text-[11px]">
+                    <span>${o.OrderID} • ${o.CustomerName}</span>
+                    <span class="font-bold text-zinc-500">${o.Status}</span>
+                </div>
+            `).join('');
         };
 
-        function checkUrlParametersForSecureRoutes() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const pane = urlParams.get('pane');
+        function checkUrlParametersForSecureRoutes(pane) {
             if (pane === 'admin') {
                 if (prompt("Enter Access PIN:") === ADMIN_PIN) { switchView('admin-view'); loadAdminData(); } 
                 else { alert("Denied."); window.location.href = window.location.pathname; }
             } else if (pane === 'delivery') {
                 if (prompt("Enter Rider PIN:") === DELIVERY_PIN) { switchView('delivery-view'); loadDeliveryData(); } 
                 else { alert("Denied."); window.location.href = window.location.pathname; }
-            } else { 
-                switchView('customer-menu'); 
             }
         }
 
         function initMenu() {
             const container = document.getElementById('menu-container');
             container.innerHTML = MENU.map(item => `
-                <div class="bg-white p-5 rounded-2xl border border-zinc-200/60 shadow-sm flex justify-between items-center transition-all hover:border-zinc-300">
+                <div class="bg-white p-5 rounded-2xl border border-zinc-200/60 shadow-sm flex justify-between items-center">
                     <div class="max-w-[68%]">
                         <div class="flex items-center gap-2">
                             <span class="text-xl">${item.icon}</span>
@@ -388,7 +480,7 @@
                     <div class="flex items-center gap-2 bg-zinc-50 border border-zinc-200 p-1 rounded-xl">
                         <button onclick="updateCart('${item.name}', -1)" class="w-7 h-7 rounded-lg bg-white border border-zinc-200 flex items-center justify-center font-bold text-xs hover:bg-zinc-100 shadow-sm">-</button>
                         <span id="qty-${btoa(item.name).replace(/=/g,'')}" class="w-6 text-center text-xs font-bold text-zinc-700">0</span>
-                        <button onclick="updateCart('${item.name}', 1)" class="w-7 h-7 rounded-lg bg-[#052219] text-white flex items-center justify-center font-bold text-xs hover:bg-emerald-950 shadow-sm">+</button>
+                        <button onclick="updateCart('${item.name}', 1)" class="w-7 h-7 rounded-lg bg-[#052219] text-white flex items-center justify-center font-bold text-xs shadow-sm">+</button>
                     </div>
                 </div>`).join('');
         }
@@ -396,16 +488,17 @@
         function initDateSelectors() {
             const selectCheckout = document.getElementById('delivery-date-select');
             const selectAdmin = document.getElementById('admin-forecast-date');
-            let optionsHtml = "";
+            
+            // Build explicit force validation blank option
+            let optionsHtml = `<option value="">-- Choose Mandatory Delivery Date --</option>`;
             for(let i=1; i<=3; i++) {
-                let d = new Date();
-                d.setDate(d.getDate() + i);
+                let d = new Date(); d.setDate(d.getDate() + i);
                 let dateString = d.toISOString().split('T')[0];
                 let humanReadable = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
                 optionsHtml += `<option value="${dateString}">${humanReadable}</option>`;
             }
             selectCheckout.innerHTML = optionsHtml;
-            if(selectAdmin) selectAdmin.innerHTML = optionsHtml;
+            if(selectAdmin) selectAdmin.innerHTML = optionsHtml.replace('<option value="">-- Choose Mandatory Delivery Date --</option>', '');
         }
 
         function updateCart(itemName, change) {
@@ -424,14 +517,16 @@
                 let match = MENU.find(m => m.name === name);
                 if(match) {
                     totalItemCount += cart[name]; totalPrice += (match.price * cart[name]);
-                    summaryItemsHtml += `<div class="flex justify-between"><span>${name} × ${cart[name]}</span><span>₹${match.price * cart[name]}</span></div>`;
                 }
             }
+            summaryItemsHtml = generateItemTableHTML(cart, false);
+            
             const stickyBar = document.getElementById('cart-sticky');
             if(totalItemCount > 0) {
                 stickyBar.classList.remove('hidden');
                 document.getElementById('cart-summary-text').innerText = `${totalItemCount} Sandwich(es) • ₹${totalPrice}`;
             } else { stickyBar.classList.add('hidden'); }
+            
             document.getElementById('checkout-items-list').innerHTML = summaryItemsHtml;
             document.getElementById('checkout-total-amt').innerText = "₹" + totalPrice;
         }
@@ -443,44 +538,35 @@
             const deliveryDate = document.getElementById('delivery-date-select').value;
             
             if(!name || !phone || !/^\d{10}$/.test(phone) || !address) {
-                alert("Please correct fields configuration details. Confirm a 10 digit phone number mapping.");
-                return;
+                alert("Please correct contact card formatting details. Confirm 10-digit number."); return;
+            }
+            // Strict Delivery Window Validation Check
+            if(!deliveryDate) {
+                alert("Validation Error: Please select a mandatory delivery date window from the highlighted area."); return;
             }
             
             let totalAmount = 0;
             for(let name in cart) { totalAmount += (MENU.find(m => m.name === name).price * cart[name]); }
 
             const btn = document.getElementById('btn-submit-order');
-            btn.disabled = true; btn.innerText = "Transmitting Entry...";
+            btn.disabled = true; btn.innerText = "Transmitting Pre-Order Entry...";
 
             const payload = { action: "placeOrder", name: name, phone: phone, address: address, deliveryDate: deliveryDate, items: cart, total: totalAmount };
 
-            fetch(API_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            }).then(() => {
+            fetch(API_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
+            .then(() => {
                 localStorage.setItem('sandwich_user_v2', JSON.stringify({ name: name, phone: phone, address: address }));
                 userProfile = { name: name, phone: phone, address: address };
-                cart = {}; 
-                initMenu(); 
-                calculateCartTotals();
-                btn.disabled = false; 
-                btn.innerText = "Confirm Pre-Order";
-                openHistory();
-            }).catch(err => {
-                console.error(err);
-                alert("Network link offline. Retry submission.");
+                cart = {}; initMenu(); calculateCartTotals();
                 btn.disabled = false; btn.innerText = "Confirm Pre-Order";
+                openHistory();
             });
         }
 
         function openHistory() {
             switchView('customer-history');
             if(!userProfile || !userProfile.phone) {
-                document.getElementById('history-login-warning').classList.remove('hidden');
-                return;
+                document.getElementById('history-login-warning').classList.remove('hidden'); return;
             }
             document.getElementById('history-login-warning').classList.add('hidden');
             document.getElementById('orders-history-list').innerHTML = `<p class="text-xs text-zinc-400 text-center py-6">Pulling order index history...</p>`;
@@ -489,7 +575,7 @@
 
         function reloadHistoryFromInput() {
             const phone = document.getElementById('history-phone-input').value.trim();
-            if(!phone || !/^\d{10}$/.test(phone)) { alert("Enter a valid 10-digit number."); return; }
+            if(!phone || !/^\d{10}$/.test(phone)) { alert("Enter 10-digit number."); return; }
             userProfile = { name: "User", phone: phone, address: "" };
             localStorage.setItem('sandwich_user_v2', JSON.stringify(userProfile));
             document.getElementById('history-login-warning').classList.add('hidden');
@@ -497,8 +583,11 @@
         }
 
         function loadAdminData() {
-            document.getElementById('admin-queue-list').innerHTML = `<p class="text-xs text-zinc-400">Syncing live tracks...</p>`;
             requestDatabaseQuery({ action: "getOrders" }, "handleAdminDataResponse");
+        }
+
+        function loadDeliveryData() {
+            requestDatabaseQuery({ action: "getOrders" }, "handleDeliveryDataResponse");
         }
 
         function runKitchenForecast() {
@@ -511,9 +600,7 @@
                 let cleanOrderDate = order.DeliveryDate.split('T')[0];
                 if(cleanOrderDate === targetDate && (order.Status === "Ordered" || order.Status === "Accepted")) {
                     let itemsMap = order.ItemsBreakdown || {};
-                    for(let name in itemsMap) {
-                        if(totals.hasOwnProperty(name)) totals[name] += Number(itemsMap[name]);
-                    }
+                    for(let name in itemsMap) { if(totals.hasOwnProperty(name)) totals[name] += Number(itemsMap[name]); }
                 }
             });
             summaryBox.innerHTML = Object.entries(totals).map(([item, qty]) => `
@@ -523,25 +610,16 @@
                 </div>`).join('');
         }
 
-        function loadDeliveryData() {
-            document.getElementById('delivery-queue-list').innerHTML = `<p class="text-xs text-zinc-400">Loading route files...</p>`;
-            requestDatabaseQuery({ action: "getOrders" }, "handleDeliveryDataResponse");
-        }
-        // Automatically look for background database updates every 15 seconds
-setInterval(() => {
-    if (currentActivePane === 'admin-view') {
-        // Silently pull fresh orders and update the kitchen list
-        requestDatabaseQuery({ action: "getOrders" }, "handleAdminDataResponse");
-    } else if (currentActivePane === 'delivery-view') {
-        // Silently pull fresh dispatch routes for riders
-        requestDatabaseQuery({ action: "getOrders" }, "handleDeliveryDataResponse");
-    } else if (currentActivePane === 'customer-history') {
-        // Silently pull fresh data and update the customer's dashboard in real-time
-        if (userProfile && userProfile.phone) {
-            requestDatabaseQuery({ action: "getOrders" }, "handleHistoryDataResponse");
-        }
-    }
-}, 15000); // 15 seconds loop
+        // --- FULLY OVERHAULED SECURE LIVE TIMED BACKGROUND LOOP ---
+        setInterval(() => {
+            if (currentActivePane === 'admin-view') {
+                requestDatabaseQuery({ action: "getOrders" }, "handleAdminDataResponse");
+            } else if (currentActivePane === 'delivery-view') {
+                requestDatabaseQuery({ action: "getOrders" }, "handleDeliveryDataResponse");
+            } else if (currentActivePane === 'customer-history') {
+                if (userProfile && userProfile.phone) requestDatabaseQuery({ action: "getOrders" }, "handleHistoryDataResponse");
+            }
+        }, 15000);
     </script>
 </body>
 </html>

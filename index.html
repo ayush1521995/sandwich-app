@@ -32,8 +32,6 @@
         let userProfile = JSON.parse(localStorage.getItem('sandwich_user_v2')) || null;
         let globalOrdersCache = [];
         let currentActivePane = 'customer-menu';
-        
-        // Internal View Subrouting State Trackers
         let adminActiveSubTab = 'live'; 
         let deliveryActiveSubTab = 'live'; 
     </script>
@@ -52,9 +50,11 @@
     <section id="customer-menu" class="app-view max-w-lg mx-auto p-4 pb-32">
         <div class="my-8 text-center px-4">
             <h2 class="serif text-3xl md:text-4xl font-semibold text-[#052219] tracking-tight">Today's Fresh Prep</h2>
-            <p class="text-xs text-zinc-500 mt-2 max-w-xs mx-auto leading-relaxed">Artisanal cold layers prepared daily. Pre-order for the next 3 days.</p>
+            <p class="text-xs text-zinc-500 mt-2 max-w-xs mx-auto leading-relaxed">Artisanal, nutrient-dense cold layers prepared daily. Pre-order for the next 3 days.</p>
         </div>
+
         <div class="space-y-4" id="menu-container"></div>
+
         <div id="cart-sticky" class="fixed bottom-4 left-4 right-4 max-w-md mx-auto bg-[#052219] text-white p-4 rounded-2xl shadow-xl hidden z-40 transform transition-all duration-300">
             <div class="flex justify-between items-center">
                 <div>
@@ -73,6 +73,7 @@
             <button onclick="switchView('customer-menu')" class="text-xs text-emerald-800 font-bold tracking-wide flex items-center gap-1">← Modify Selected Items</button>
             <h2 class="serif text-2xl font-bold text-[#052219] mt-2">Logistics Routing</h2>
         </div>
+
         <div class="bg-white p-6 rounded-3xl border border-zinc-200/60 shadow-sm space-y-5">
             <div class="space-y-4">
                 <label class="block text-[11px] uppercase tracking-wider font-bold text-zinc-400">1. Delivery Destination Profile</label>
@@ -86,12 +87,14 @@
                     <textarea id="user-address" rows="3" placeholder="Full Dropoff Address Details" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-3 text-sm focus:outline-none focus:border-emerald-800"></textarea>
                 </div>
             </div>
+
             <div class="bg-amber-50 border-2 border-amber-400 p-4 rounded-2xl space-y-1.5">
                 <label class="block text-xs uppercase tracking-wider font-black text-amber-950 flex items-center gap-1">
                     📅 2. Select Mandatory Delivery Date
                 </label>
                 <select id="delivery-date-select" class="w-full bg-white border border-amber-300 rounded-xl p-3 text-sm font-bold text-amber-950 focus:outline-none focus:ring-2 focus:ring-emerald-800"></select>
             </div>
+
             <div class="border-t border-zinc-100 pt-4 bg-zinc-50/50 p-4 rounded-xl">
                 <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Item Summary</p>
                 <div id="checkout-items-list" class="space-y-2 text-xs font-medium text-zinc-700"></div>
@@ -100,6 +103,7 @@
                     <span id="checkout-total-amt" class="text-[#052219]">₹0</span>
                 </div>
             </div>
+
             <button onclick="submitOrder()" id="btn-submit-order" class="w-full bg-[#052219] hover:bg-emerald-950 text-white font-bold p-3.5 rounded-xl transition shadow-md flex justify-center items-center">
                 Confirm Pre-Order
             </button>
@@ -120,8 +124,8 @@
 
     <section id="admin-view" class="app-view max-w-6xl mx-auto p-6 hidden">
         <div class="flex gap-2 border-b border-zinc-200 pb-px mb-6 font-semibold text-xs tracking-wide uppercase">
-            <button id="admin-tab-btn-live" onclick="toggleAdminSubTab('live')" class="px-4 py-2 border-b-2 border-[#052219] text-[#052219]">🍳 Live Tracking Track</button>
-            <button id="admin-tab-btn-history" onclick="toggleAdminSubTab('history')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400 hover:text-zinc-600">📊 Advanced Analytics Ledger</button>
+            <button id="admin-tab-btn-live" onclick="toggleAdminSubTab('live')" class="px-4 py-2 border-b-2 border-[#052219] text-[#052219]">🍳 Live Kitchen Track</button>
+            <button id="admin-tab-btn-history" onclick="toggleAdminSubTab('history')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400 hover:text-zinc-600">📊 Advanced Search History</button>
         </div>
 
         <div id="admin-subcontainer-live" class="space-y-6">
@@ -143,7 +147,7 @@
             <div class="bg-white border rounded-2xl p-5 shadow-sm grid grid-cols-1 sm:grid-cols-4 gap-4 items-end text-xs font-bold text-zinc-500">
                 <div>
                     <label class="block mb-1 text-[10px] uppercase">Scope Filter Range</label>
-                    <select id="admin-date-range-preset" onchange="applyAdminHistoryDatePresets()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium focus:outline-none text-zinc-700">
+                    <select id="admin-date-range-preset" onchange="applyAdminHistoryDatePresets()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
                         <option value="all">All Lifetime Data</option>
                         <option value="today">Today's Pool</option>
                         <option value="weekly">Past 7 Days (Weekly)</option>
@@ -152,22 +156,23 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block mb-1 text-[10px] uppercase">Start Boundary</label>
+                    <label class="block mb-1 text-[10px] uppercase">Start Date</label>
                     <input type="date" id="admin-date-start" onchange="filterAdminArchiveLedger()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
                 </div>
                 <div>
-                    <label class="block mb-1 text-[10px] uppercase">End Boundary</label>
+                    <label class="block mb-1 text-[10px] uppercase">End Date</label>
                     <input type="date" id="admin-date-end" onchange="filterAdminArchiveLedger()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
                 </div>
                 <div>
+                    <label class="block mb-1 text-[10px] uppercase">Filter Text Search</label>
                     <input type="text" id="admin-search-input" oninput="filterAdminArchiveLedger()" placeholder="Search Name, Phone, or ID..." class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none focus:border-emerald-800">
                 </div>
             </div>
             
             <div class="bg-emerald-950 text-[#F3EDE4] p-4 rounded-xl flex justify-around text-center text-xs shadow-sm font-bold">
-                <div><p class="opacity-60 text-[10px] uppercase">Scoped Records Count</p><p class="text-xl font-black mt-0.5" id="history-widget-total-count">0</p></div>
+                <div><p class="opacity-60 text-[10px] uppercase">Total Scoped Records</p><p class="text-xl font-black mt-0.5" id="history-widget-total-count">0</p></div>
                 <div class="border-l border-emerald-900"></div>
-                <div><p class="opacity-60 text-[10px] uppercase">Scoped Turnover Value</p><p class="text-xl font-black mt-0.5 text-amber-400" id="history-widget-total-value">₹0</p></div>
+                <div><p class="opacity-60 text-[10px] uppercase">Total Scoped Revenue</p><p class="text-xl font-black mt-0.5 text-amber-400" id="history-widget-total-value">₹0</p></div>
             </div>
 
             <div id="admin-archive-list" class="space-y-3"></div>
@@ -176,8 +181,8 @@
 
     <section id="delivery-view" class="app-view max-w-2xl mx-auto p-4 hidden">
         <div class="flex gap-2 border-b border-zinc-200 pb-px mb-4 font-semibold text-xs uppercase">
-            <button id="delivery-tab-btn-live" onclick="toggleDeliverySubTab('live')" class="px-4 py-2 border-b-2 border-[#052219] text-[#052219]">📦 Today's Live Active Run</button>
-            <button id="delivery-tab-btn-history" onclick="toggleDeliverySubTab('history')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400 hover:text-zinc-600">🗄️ My Accumulation Ledger</button>
+            <button id="delivery-tab-btn-live" onclick="toggleDeliverySubTab('live')" class="px-4 py-2 border-b-2 border-[#052219] text-[#052219]">📦 Today's Active Run</button>
+            <button id="delivery-tab-btn-history" onclick="toggleDeliverySubTab('history')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400 hover:text-zinc-600">🗄️ Rider Ledger</button>
         </div>
 
         <div id="delivery-subcontainer-live" class="space-y-4">
@@ -187,20 +192,27 @@
 
         <div id="delivery-subcontainer-history" class="space-y-4 hidden">
             <div class="bg-indigo-950 text-white p-4 rounded-2xl flex justify-between items-center shadow-sm">
-                <div><p class="text-[10px] uppercase opacity-60 font-bold">Accumulated Cash Remittance</p><p class="text-2xl font-black text-emerald-400" id="rider-history-cash-count">₹0</p></div>
-                <div class="text-right"><p class="text-[10px] uppercase opacity-60 font-bold">Delivered Runs</p><p class="text-xl font-bold" id="rider-history-delivery-count">0 Run(s)</p></div>
+                <div><p class="text-[10px] uppercase opacity-60 font-bold">Total Cash Collected</p><p class="text-2xl font-black text-emerald-400" id="rider-history-cash-count">₹0</p></div>
+                <div class="text-right"><p class="text-[10px] uppercase opacity-60 font-bold">Successful Drops</p><p class="text-xl font-bold" id="rider-history-delivery-count">0 Run(s)</p></div>
             </div>
             <div id="delivery-archive-list" class="space-y-2"></div>
         </div>
     </section>
 
     <script>
-        // --- Tab routing management sub-triggers ---
+        function switchView(viewId) {
+            currentActivePane = viewId;
+            document.querySelectorAll('.app-view').forEach(view => view.classList.add('hidden'));
+            const destination = document.getElementById(viewId);
+            if(destination) destination.classList.remove('hidden');
+            window.location.hash = viewId;
+            updateNavbarDesignUI(viewId);
+        }
+
         function toggleAdminSubTab(target) {
             adminActiveSubTab = target;
             document.getElementById('admin-tab-btn-live').className = `px-4 py-2 border-b-2 ${target==='live'?'border-[#052219] text-[#052219]':'border-transparent text-zinc-400'}`;
             document.getElementById('admin-tab-btn-history').className = `px-4 py-2 border-b-2 ${target==='history'?'border-[#052219] text-[#052219]':'border-transparent text-zinc-400'}`;
-            
             document.getElementById('admin-subcontainer-live').classList.toggle('hidden', target !== 'live');
             document.getElementById('admin-subcontainer-history').classList.toggle('hidden', target !== 'history');
             if(target === 'history') filterAdminArchiveLedger();
@@ -210,229 +222,35 @@
             deliveryActiveSubTab = target;
             document.getElementById('delivery-tab-btn-live').className = `px-4 py-2 border-b-2 ${target==='live'?'border-[#052219] text-[#052219]':'border-transparent text-zinc-400'}`;
             document.getElementById('delivery-tab-btn-history').className = `px-4 py-2 border-b-2 ${target==='history'?'border-[#052219] text-[#052219]':'border-transparent text-zinc-400'}`;
-            
             document.getElementById('delivery-subcontainer-live').classList.toggle('hidden', target !== 'live');
             document.getElementById('delivery-subcontainer-history').classList.toggle('hidden', target !== 'history');
         }
 
-        // --- Credibility Scoring Radar System ---
         function generateUserCredibilityBadge(totalOrders, totalRefusals) {
             let countOrders = Number(totalOrders) || 0;
             let countRefusals = Number(totalRefusals) || 0;
-
-            if(countOrders === 0) {
-                return `<span class="bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded-md font-bold text-[10px] tracking-wide uppercase">🆕 New Customer (Verify Via Call)</span>`;
-            }
-            if(countRefusals > 0) {
-                return `<span class="bg-rose-50 text-rose-800 border border-rose-200 px-2 py-0.5 rounded-md font-black text-[10px] tracking-wide uppercase animate-pulse">⚠️ High Risk Actor (${countRefusals} Refusal[s]!)</span>`;
-            }
-            return `<span class="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-md font-bold text-[10px] tracking-wide uppercase">✅ Verified Guest (${countOrders} Orders Completed)</span>`;
+            if(countOrders === 0) return `<span class="bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded-md font-bold text-[10px] uppercase">🆕 New Customer</span>`;
+            if(countRefusals > 0) return `<span class="bg-rose-50 text-rose-800 border border-rose-200 px-2 py-0.5 rounded-md font-black text-[10px] uppercase animate-pulse">⚠️ Risk Actor (${countRefusals} Refusals)</span>`;
+            return `<span class="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-md font-bold text-[10px] uppercase">✅ Verified (${countOrders} Orders)</span>`;
         }
 
-        function applyAdminHistoryDatePresets() {
-            const preset = document.getElementById('admin-date-range-preset').value;
-            const startInput = document.getElementById('admin-date-start');
-            const endInput = document.getElementById('admin-date-end');
-            
-            const todayStr = new Date().toISOString().split('T')[0];
-            
-            if(preset === 'all') { startInput.value = ''; endInput.value = ''; }
-            else if(preset === 'today') { startInput.value = todayStr; endInput.value = todayStr; }
-            else if(preset === 'weekly') {
-                let d = new Date(); d.setDate(d.getDate() - 7);
-                startInput.value = d.toISOString().split('T')[0]; endInput.value = todayStr;
-            } else if(preset === 'monthly') {
-                let d = new Date(); d.setDate(d.getDate() - 30);
-                startInput.value = d.toISOString().split('T')[0]; endInput.value = todayStr;
-            }
-            filterAdminArchiveLedger();
-        }
-
-        // --- Structured Item Alignments Markup Generator ---
         function generateItemTableHTML(itemsMap) {
-            if(!itemsMap || Object.keys(itemsMap).length === 0) return `<p class="text-zinc-400 italic">No structural items listed.</p>`;
+            if(!itemsMap || Object.keys(itemsMap).length === 0) return `<p class="text-zinc-400 italic text-[11px]">No items data payload parsed.</p>`;
             return `<div class="space-y-1 bg-zinc-50 border border-zinc-100 p-3 rounded-xl font-medium my-2">` + 
                 Object.entries(itemsMap).map(([name, qty]) => `
                     <div class="flex justify-between items-center text-xs">
-                        <span class="text-zinc-800 font-semibold">${name}</span>
+                        <span class="text-zinc-700 font-semibold">${name}</span>
                         <div class="flex-grow mx-2 border-b border-dashed border-zinc-200"></div>
-                        <span class="bg-[#052219] text-white text-[11px] px-2 py-0.5 rounded-md font-black min-w32 text-center">×${qty}</span>
+                        <span class="bg-[#052219] text-white text-[11px] px-2 py-0.5 rounded-md font-black min-w-[32px] text-center">×${qty}</span>
                     </div>`).join('') + `</div>`;
         }
 
-        // --- Core Transport Router Interfacing ---
-        function executeOptimisticStatusChange(orderId, status, cardDomId) {
-            const targetCard = document.getElementById(cardDomId);
-            if(targetCard) {
-                targetCard.classList.add('order-card-hide');
-                setTimeout(() => targetCard.remove(), 300);
-            }
-            let cachedOrder = globalOrdersCache.find(o => o.OrderID === orderId);
-            if(cachedOrder) {
-                cachedOrder.Status = status; 
-                runKitchenForecast();
-                if(currentActivePane === 'admin-view') loadAdminData();
-                if(currentActivePane === 'delivery-view') loadDeliveryData();
-            }
-            fetch(API_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "updateStatus", orderId: orderId, status: status }) });
-        }
-
-        // --- PIPELINE DATA RESPONSES ---
-        window.handleAdminDataResponse = function(response) {
-            if(!response || !response.success) return;
-            globalOrdersCache = response.data || [];
-            buildDashboardAnalyticsWidgets(globalOrdersCache, 'admin-counters-bar');
-            runKitchenForecast();
-
-            const pending = globalOrdersCache.filter(o => o.Status === "Ordered");
-            const queue = document.getElementById('admin-queue-list');
-            
-            if(pending.length === 0) {
-                queue.innerHTML = `<p class="text-xs text-zinc-400 py-6 bg-zinc-50 border rounded-2xl text-center">All clear. No unresolved incoming orders.</p>`;
-            } else {
-                queue.innerHTML = pending.map(order => {
-                    const cardId = `admin-card-${order.OrderID}`;
-                    return `
-                        <div id="${cardId}" class="bg-white p-5 rounded-2xl border border-zinc-200 text-xs shadow-sm flex flex-col md:flex-row justify-between md:items-center gap-4">
-                            <div class="space-y-1.5 w-full md:max-w-[70%]">
-                                <div class="flex items-center gap-2 flex-wrap mb-1">
-                                    <span class="font-mono text-zinc-400 font-bold block tracking-wider">${order.OrderID}</span>
-                                    ${generateUserCredibilityBadge(order.TotalOrdersPlaced, order.TotalRefusedDeliveries)}
-                                </div>
-                                <span class="text-zinc-800 font-bold block text-sm">👤 ${order.CustomerName} (${order.Phone})</span>
-                                ${generateItemTableHTML(order.ItemsBreakdown)}
-                                <p class="text-zinc-500 text-[11px]">📍 Address: ${order.Address}</p>
-                                <p class="text-emerald-950 font-bold text-[11px] mt-2 bg-emerald-50 w-fit px-2 py-0.5 rounded-md">📅 Target Delivery: ${formatHumanDate(order.DeliveryDate)} | Value: ₹${order.TotalAmount}</p>
-                            </div>
-                            <div class="flex flex-row md:flex-col gap-2 min-w-[100px]">
-                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Accepted', '${cardId}')" class="w-full bg-[#052219] text-white font-bold py-2 rounded-xl text-xs hover:bg-emerald-950">Accept</button>
-                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Rejected', '${cardId}')" class="w-full bg-zinc-50 text-zinc-500 font-bold py-2 rounded-xl border text-xs hover:bg-rose-50 hover:text-rose-700">Reject</button>
-                            </div>
-                        </div>`;
-                }).join('');
-            }
-            if(adminActiveSubTab === 'history') filterAdminArchiveLedger();
-        };
-
-        function filterAdminArchiveLedger() {
-            const query = document.getElementById('admin-search-input').value.toLowerCase().trim();
-            const startDate = document.getElementById('admin-date-start').value;
-            const endDate = document.getElementById('admin-date-end').value;
-            const archiveBox = document.getElementById('admin-archive-list');
-            
-            let filtered = globalOrdersCache.filter(o => o.Status !== "Ordered");
-
-            // Apply strict timestamp scope ranges filtering logic loops
-            if(startDate) { filtered = filtered.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] >= startDate); }
-            if(endDate) { filtered = filtered.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] <= endDate); }
-            
-            // Apply text matches configuration inputs logic loops
-            if(query) {
-                filtered = filtered.filter(o => 
-                    o.OrderID.toLowerCase().includes(query) || 
-                    o.CustomerName.toLowerCase().includes(query) || 
-                    String(o.Phone).includes(query)
-                );
-            }
-
-            // Run deep math aggregators dynamically on the filtered dataset
-            let totalVolumeValue = 0;
-            filtered.forEach(o => { if(o.Status === "Delivered") totalVolumeValue += Number(o.TotalAmount) || 0; });
-            
-            document.getElementById('history-widget-total-count').innerText = filtered.length;
-            document.getElementById('history-widget-total-value').innerText = "₹" + totalVolumeValue;
-
-            if(filtered.length === 0) {
-                archiveBox.innerHTML = `<p class="text-xs text-zinc-400 italic text-center py-6 bg-zinc-50 border border-dashed rounded-xl">No archival historical records match the chosen search window filter context parameters.</p>`;
-                return;
-            }
-
-            archiveBox.innerHTML = filtered.map(order => {
-                let statusColor = "bg-zinc-100 text-zinc-600";
-                if(order.Status === "Accepted") statusColor = "bg-emerald-100 text-emerald-800";
-                if(order.Status === "Delivered") statusColor = "bg-blue-100 text-blue-800";
-                if(order.Status === "Rejected" || order.Status === "Cancelled" || order.Status === "Refused") statusColor = "bg-rose-100 text-rose-700";
-
-                return `
-                    <div class="bg-white p-5 rounded-2xl border border-zinc-200 text-xs shadow-sm">
-                        <div class="flex justify-between items-center border-b border-zinc-100 pb-2 mb-2">
-                            <span class="font-mono text-zinc-400 font-bold">${order.OrderID}</span>
-                            <span class="px-2 py-0.5 rounded-lg text-[10px] uppercase font-bold tracking-wider ${statusColor}">${order.Status}</span>
-                        </div>
-                        <p class="font-bold text-zinc-800 text-sm">👤 ${order.CustomerName} (${order.Phone})</p>
-                        ${generateItemTableHTML(order.ItemsBreakdown)}
-                        <p class="text-zinc-500 text-[11px] mt-1">📍 Destination: ${order.Address}</p>
-                        <p class="text-zinc-400 text-[11px] mt-0.5 font-semibold">📅 Slotted Window: ${formatHumanDate(order.DeliveryDate)} | Value Collected: ₹${order.TotalAmount}</p>
-                    </div>`;
-            }).join('');
-        }
-
-        window.handleDeliveryDataResponse = function(response) {
-            if(!response || !response.success) return;
-            globalOrdersCache = response.data || [];
-            buildDashboardAnalyticsWidgets(globalOrdersCache, 'delivery-counters-bar');
-
-            const active = globalOrdersCache.filter(o => o.Status === "Accepted");
-            const historyList = globalOrdersCache.filter(o => o.Status === "Delivered" || o.Status === "Refused");
-
-            // Render live runs queue tab
-            const list = document.getElementById('delivery-queue-list');
-            if(active.length === 0) {
-                list.innerHTML = `<p class="text-xs text-zinc-400 text-center py-8 bg-zinc-50 border rounded-2xl border-dashed">All Clear. No accepted orders out for dispatch right now.</p>`;
-            } else {
-                list.innerHTML = active.map(order => {
-                    const cardId = `delivery-card-${order.OrderID}`;
-                    return `
-                        <div id="${cardId}" class="bg-white p-5 rounded-2xl border-l-4 border-emerald-800 shadow-sm text-xs space-y-2">
-                            <div class="flex justify-between font-bold text-zinc-900 text-sm">
-                                <span>${order.OrderID}</span>
-                                <span class="text-emerald-900 font-extrabold text-base">COD Due: ₹${order.TotalAmount}</span>
-                            </div>
-                            ${generateItemTableHTML(order.ItemsBreakdown)}
-                            <div class="bg-zinc-50 p-3 rounded-xl text-zinc-600 space-y-1 text-[11px] font-medium">
-                                <p><strong>Customer:</strong> ${order.CustomerName}</p>
-                                <p><strong>Call Line:</strong> <a href="tel:${order.Phone}" class="text-emerald-800 underline font-bold">${order.Phone}</a></p>
-                                <p><strong>Address:</strong> ${order.Address}</p>
-                                <p><strong>Slotted Date:</strong> ${formatHumanDate(order.DeliveryDate)}</p>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2 pt-1">
-                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Delivered', '${cardId}')" class="bg-emerald-800 hover:bg-emerald-900 text-white font-bold py-2.5 rounded-xl shadow-sm">✓ Paid & Delivered</button>
-                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Refused', '${cardId}')" class="bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 font-bold py-2.5 rounded-xl">❌ Refused</button>
-                            </div>
-                        </div>`;
-                }).join('');
-            }
-
-            // Render rider historical collection metrics calculators
-            let totalCashCollected = 0;
-            let successDeliveriesCount = 0;
-            historyList.forEach(o => { if(o.Status === "Delivered") { totalCashCollected += Number(o.TotalAmount) || 0; successDeliveriesCount++; } });
-            
-            document.getElementById('rider-history-cash-count').innerText = "₹" + totalCashCollected;
-            document.getElementById('rider-history-delivery-count').innerText = `${successDeliveriesCount} Run(s)`;
-
-            document.getElementById('delivery-archive-list').innerHTML = historyList.map(o => {
-                let badgeStyle = o.Status === "Delivered" ? "text-emerald-800 bg-emerald-50" : "text-rose-700 bg-rose-50";
-                return `
-                <div class="bg-white p-4 border rounded-xl text-xs space-y-1 font-medium">
-                    <div class="flex justify-between items-center">
-                        <span><strong>${o.OrderID}</strong> • ${o.CustomerName}</span>
-                        <span class="font-bold uppercase text-[9px] px-2 py-0.5 rounded-md ${badgeStyle}">${o.Status}</span>
-                    </div>
-                    <p class="text-[11px] text-zinc-400 font-normal">📍 Drop: ${o.Address} | Date: ${formatHumanDate(o.DeliveryDate)}</p>
-                    <p class="text-zinc-900 font-bold text-[11px]">Value: ₹${o.TotalAmount}</p>
-                </div>`;
-            }).join('');
-        };
-
-        // --- IMMUTABLE SYSTEM OPERATIONS (Unchanged Core Logic) ---
-        function switchView(viewId) {
-            currentActivePane = viewId;
-            document.querySelectorAll('.app-view').forEach(view => view.classList.add('hidden'));
-            const destination = document.getElementById(viewId);
-            if(destination) destination.classList.remove('hidden');
-            window.location.hash = viewId;
-            updateNavbarDesignUI(viewId);
+        function formatHumanDate(dateStr) {
+            if(!dateStr) return '';
+            const normalized = dateStr.split('T')[0]; 
+            const dateObj = new Date(normalized);
+            if(isNaN(dateObj.getTime())) return dateStr;
+            return dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
         }
 
         function updateNavbarDesignUI(viewId) {
@@ -469,6 +287,7 @@
                         <button onclick="updateCart('${item.name}', 1)" class="w-7 h-7 rounded-lg bg-[#052219] text-white flex items-center justify-center font-bold text-xs shadow-sm">+</button>
                     </div>
                 </div>`).join('');
+            switchView(window.location.hash.replace('#','') || 'customer-menu');
         }
 
         function initDateSelectors() {
@@ -509,7 +328,7 @@
             const phone = document.getElementById('user-phone').value.trim();
             const address = document.getElementById('user-address').value.trim();
             const deliveryDate = document.getElementById('delivery-date-select').value;
-            if(!name || !phone || !/^\d{10}$/.test(phone) || !address || !deliveryDate) { alert("Please correct missing credentials fields and pick a mandatory delivery date."); return; }
+            if(!name || !phone || !/^\d{10}$/.test(phone) || !address || !deliveryDate) { alert("Complete details and select a mandatory delivery date."); return; }
             let totalAmount = 0; for(let name in cart) { totalAmount += (MENU.find(m => m.name === name).price * cart[name]); }
             const btn = document.getElementById('btn-submit-order'); btn.disabled = true; btn.innerText = "Transmitting Entry...";
             fetch(API_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "placeOrder", name: name, phone: phone, address: address, deliveryDate: deliveryDate, items: cart, total: totalAmount }) })
@@ -521,45 +340,110 @@
             });
         }
 
-        function openHistory() {
-            switchView('customer-history');
-            if(!userProfile || !userProfile.phone) { document.getElementById('history-login-warning').classList.remove('hidden'); return; }
-            document.getElementById('history-login-warning').classList.add('hidden');
-            requestDatabaseQuery({ action: "getOrders" }, "handleHistoryDataResponse");
+        function executeOptimisticStatusChange(orderId, status, cardDomId) {
+            const targetCard = document.getElementById(cardDomId);
+            if(targetCard) {
+                targetCard.classList.add('order-card-hide');
+                setTimeout(() => targetCard.remove(), 300);
+            }
+            let cachedOrder = globalOrdersCache.find(o => o.OrderID === orderId);
+            if(cachedOrder) {
+                cachedOrder.Status = status; 
+                runKitchenForecast();
+                if(currentActivePane === 'admin-view') buildDashboardAnalyticsWidgets(globalOrdersCache, 'admin-counters-bar');
+                if(currentActivePane === 'delivery-view') buildDashboardAnalyticsWidgets(globalOrdersCache, 'delivery-counters-bar');
+            }
+            fetch(API_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "updateStatus", orderId: orderId, status: status }) });
         }
 
-        function reloadHistoryFromInput() {
-            const phone = document.getElementById('history-phone-input').value.trim();
-            if(!phone || !/^\d{10}$/.test(phone)) { alert("Enter 10-digit number."); return; }
-            userProfile = { name: "User", phone: phone, address: "" }; localStorage.setItem('sandwich_user_v2', JSON.stringify(userProfile));
-            document.getElementById('history-login-warning').classList.add('hidden'); openHistory();
+        function applyAdminHistoryDatePresets() {
+            const preset = document.getElementById('admin-date-range-preset').value;
+            const startInput = document.getElementById('admin-date-start');
+            const endInput = document.getElementById('admin-date-end');
+            const todayStr = new Date().toISOString().split('T')[0];
+            if(preset === 'all') { startInput.value = ''; endInput.value = ''; }
+            else if(preset === 'today') { startInput.value = todayStr; endInput.value = todayStr; }
+            else if(preset === 'weekly') {
+                let d = new Date(); d.setDate(d.getDate() - 7);
+                startInput.value = d.toISOString().split('T')[0]; endInput.value = todayStr;
+            } else if(preset === 'monthly') {
+                let d = new Date(); d.setDate(d.getDate() - 30);
+                startInput.value = d.toISOString().split('T')[0]; endInput.value = todayStr;
+            }
+            filterAdminArchiveLedger();
         }
 
-        function loadAdminData() { requestDatabaseQuery({ action: "getOrders" }, "handleAdminDataResponse"); }
-        function loadDeliveryData() { requestDatabaseQuery({ action: "getOrders" }, "handleDeliveryDataResponse"); }
+        function filterAdminArchiveLedger() {
+            const query = document.getElementById('admin-search-input').value.toLowerCase().trim();
+            const startDate = document.getElementById('admin-date-start').value;
+            const endDate = document.getElementById('admin-date-end').value;
+            const archiveBox = document.getElementById('admin-archive-list');
+            
+            let filtered = globalOrdersCache.filter(o => o.Status !== "Ordered");
+            if(startDate) { filtered = filtered.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] >= startDate); }
+            if(endDate) { filtered = filtered.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] <= endDate); }
+            if(query) {
+                filtered = filtered.filter(o => o.OrderID.toLowerCase().includes(query) || o.CustomerName.toLowerCase().includes(query) || String(o.Phone).includes(query));
+            }
+            let totalVolumeValue = 0; filtered.forEach(o => { if(o.Status === "Delivered") totalVolumeValue += Number(o.TotalAmount) || 0; });
+            document.getElementById('history-widget-total-count').innerText = filtered.length;
+            document.getElementById('history-widget-total-value').innerText = "₹" + totalVolumeValue;
 
-        function runKitchenForecast() {
-            const targetDate = document.getElementById('admin-forecast-date').value;
-            const summaryBox = document.getElementById('kitchen-summary-box');
-            let totals = { "Spinach N Corn Sandwich": 0, "Veg Coleslaw Sandwich": 0, "Veg Green salad sandwich": 0, "Chicken Salami Sandwich": 0, "Chicken Sandwich": 0 };
-            globalOrdersCache.forEach(order => {
-                if(!order.DeliveryDate) return;
-                if(order.DeliveryDate.split('T')[0] === targetDate && (order.Status === "Ordered" || order.Status === "Accepted")) {
-                    for(let name in order.ItemsBreakdown) { if(totals.hasOwnProperty(name)) totals[name] += Number(order.ItemsBreakdown[name]); }
-                }
-            });
-            summaryBox.innerHTML = Object.entries(totals).map(([item, qty]) => `
-                <div class="flex justify-between items-center bg-zinc-50 p-3 rounded-xl border border-zinc-100 text-xs font-medium">
-                    <span class="text-zinc-700">${item}</span>
-                    <span class="${qty > 0 ? 'bg-[#052219] text-white' : 'bg-zinc-200 text-zinc-400'} font-bold px-3 py-1 rounded-lg text-xs min-w-[34px] text-center">${qty}</span>
-                </div>`).join('');
+            if(filtered.length === 0) {
+                archiveBox.innerHTML = `<p class="text-xs text-zinc-400 italic text-center py-6 bg-zinc-50 border border-dashed rounded-xl">No historical records match parameters.</p>`;
+                return;
+            }
+            archiveBox.innerHTML = filtered.map(order => {
+                let statusColor = order.Status === "Accepted" ? "bg-emerald-100 text-emerald-800" : (order.Status === "Delivered" ? "bg-blue-100 text-blue-800" : "bg-rose-100 text-rose-700");
+                return `
+                    <div class="bg-white p-5 rounded-2xl border border-zinc-200 text-xs shadow-sm">
+                        <div class="flex justify-between items-center border-b border-zinc-100 pb-2 mb-2">
+                            <span class="font-mono text-zinc-400 font-bold">${order.OrderID}</span>
+                            <span class="px-2 py-0.5 rounded-lg text-[10px] uppercase font-bold tracking-wider ${statusColor}">${order.Status}</span>
+                        </div>
+                        <p class="font-bold text-zinc-800 text-sm">👤 ${order.CustomerName} (${order.Phone})</p>
+                        ${generateItemTableHTML(order.ItemsBreakdown)}
+                        <p class="text-zinc-500 text-[11px] mt-1">📍 Address: ${order.Address}</p>
+                        <p class="text-zinc-400 text-[11px] mt-0.5 font-semibold">📅 Delivery Date: ${formatHumanDate(order.DeliveryDate)} | Value: ₹${order.TotalAmount}</p>
+                    </div>`;
+            }).join('');
         }
 
-        setInterval(() => {
-            if (currentActivePane === 'admin-view') loadAdminData();
-            else if (currentActivePane === 'delivery-view') loadDeliveryData();
-            else if (currentActivePane === 'customer-history' && userProfile?.phone) requestDatabaseQuery({ action: "getOrders" }, "handleHistoryDataResponse");
-        }, 15000);
-    </script>
-</body>
-</html>
+        window.handleAdminDataResponse = function(response) {
+            if(!response || !response.success) return;
+            globalOrdersCache = response.data || [];
+            buildDashboardAnalyticsWidgets(globalOrdersCache, 'admin-counters-bar');
+            runKitchenForecast();
+            const pending = globalOrdersCache.filter(o => o.Status === "Ordered");
+            const queue = document.getElementById('admin-queue-list');
+            if(pending.length === 0) {
+                queue.innerHTML = `<p class="text-xs text-zinc-400 py-6 bg-zinc-50 border rounded-2xl text-center">All clear. No incoming orders.</p>`;
+            } else {
+                queue.innerHTML = pending.map(order => {
+                    const cardId = `admin-card-${order.OrderID}`;
+                    return `
+                        <div id="${cardId}" class="bg-white p-5 rounded-2xl border border-zinc-200 text-xs shadow-sm flex flex-col md:flex-row justify-between md:items-center gap-4">
+                            <div class="space-y-1.5 w-full md:max-w-[70%]">
+                                <div class="flex items-center gap-2 flex-wrap mb-1">
+                                    <span class="font-mono text-zinc-400 font-bold block tracking-wider">${order.OrderID}</span>
+                                    ${generateUserCredibilityBadge(order.TotalOrdersPlaced, order.TotalRefusedDeliveries)}
+                                </div>
+                                <span class="text-zinc-800 font-bold block text-sm">👤 ${order.CustomerName} (${order.Phone})</span>
+                                ${generateItemTableHTML(order.ItemsBreakdown)}
+                                <p class="text-zinc-500 text-[11px]">📍 Address: ${order.Address}</p>
+                                <p class="text-emerald-950 font-bold text-[11px] mt-2 bg-emerald-50 w-fit px-2 py-0.5 rounded-md">📅 Target Delivery: ${formatHumanDate(order.DeliveryDate)} | Value: ₹${order.TotalAmount}</p>
+                            </div>
+                            <div class="flex flex-row md:flex-col gap-2 min-w-[100px]">
+                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Accepted', '${cardId}')" class="w-full bg-[#052219] text-white font-bold py-2 rounded-xl text-xs hover:bg-emerald-950">Accept</button>
+                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Rejected', '${cardId}')" class="w-full bg-zinc-50 text-zinc-500 font-bold py-2 rounded-xl border text-xs hover:bg-rose-50 hover:text-rose-700">Reject</button>
+                            </div>
+                        </div>`;
+                }).join('');
+            }
+            if(adminActiveSubTab === 'history') filterAdminArchiveLedger();
+        };
+
+        window.handleHistoryDataResponse = function(response) {
+            const container = document.getElementById('orders-history-list');
+            if(!response || !response.success) return;
+            globalOrdersCache =

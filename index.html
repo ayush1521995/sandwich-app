@@ -36,6 +36,7 @@
         let deliveryActiveSubTab = 'live'; 
     </script>
 
+    <!-- NAVBAR -->
     <nav class="bg-[#052219] text-[#F3EDE4] px-6 py-4 sticky top-0 z-50 shadow-sm flex justify-between items-center border-b border-emerald-950/40">
         <div onclick="returnToMainStorefront()" class="cursor-pointer">
             <h1 class="serif text-xl md:text-2xl font-bold tracking-wide" id="nav-main-title">The Cold Press</h1>
@@ -47,6 +48,7 @@
         </div>
     </nav>
 
+    <!-- CUSTOMER VIEW: MENU STOREFRONT -->
     <section id="customer-menu" class="app-view max-w-lg mx-auto p-4 pb-32">
         <div class="my-8 text-center px-4">
             <h2 class="serif text-3xl md:text-4xl font-semibold text-[#052219] tracking-tight">Today's Fresh Prep</h2>
@@ -55,6 +57,7 @@
 
         <div class="space-y-4" id="menu-container"></div>
 
+        <!-- Sticky Floating Footer Bar -->
         <div id="cart-sticky" class="fixed bottom-4 left-4 right-4 max-w-md mx-auto bg-[#052219] text-white p-4 rounded-2xl shadow-xl hidden z-40 transform transition-all duration-300">
             <div class="flex justify-between items-center">
                 <div>
@@ -68,23 +71,25 @@
         </div>
     </section>
 
+    <!-- CUSTOMER VIEW: CHECKOUT -->
     <section id="checkout-step" class="app-view max-w-md mx-auto p-4 hidden">
         <div class="mb-6">
             <button onclick="switchView('customer-menu')" class="text-xs text-emerald-800 font-bold tracking-wide flex items-center gap-1">← Modify Selected Items</button>
             <h2 class="serif text-2xl font-bold text-[#052219] mt-2">Logistics Routing</h2>
         </div>
 
-        <div class="bg-white p-6 rounded-3xl border border-zinc-200/60 shadow-sm space-y-5">
+        <!-- FIXED: Wrapped inputs explicitly in a form block with an active submission listener interception -->
+        <form onsubmit="submitOrder(event)" class="bg-white p-6 rounded-3xl border border-zinc-200/60 shadow-sm space-y-5">
             <div class="space-y-4">
                 <label class="block text-[11px] uppercase tracking-wider font-bold text-zinc-400">1. Delivery Destination Profile</label>
                 <div>
-                    <input type="text" id="user-name" placeholder="Recipient's Name" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-3 text-sm focus:outline-none focus:border-emerald-800">
+                    <input type="text" id="user-name" required placeholder="Recipient's Name" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-3 text-sm focus:outline-none focus:border-emerald-800">
                 </div>
                 <div>
-                    <input type="tel" id="user-phone" placeholder="10-Digit Mobile Number" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-3 text-sm focus:outline-none focus:border-emerald-800">
+                    <input type="tel" id="user-phone" required placeholder="10-Digit Mobile Number" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-3 text-sm focus:outline-none focus:border-emerald-800">
                 </div>
                 <div>
-                    <textarea id="user-address" rows="3" placeholder="Full Dropoff Address Details" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-3 text-sm focus:outline-none focus:border-emerald-800"></textarea>
+                    <textarea id="user-address" required rows="3" placeholder="Full Dropoff Address Details" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-3 text-sm focus:outline-none focus:border-emerald-800"></textarea>
                 </div>
             </div>
 
@@ -92,7 +97,7 @@
                 <label class="block text-xs uppercase tracking-wider font-black text-amber-950 flex items-center gap-1">
                     📅 2. Select Mandatory Delivery Date
                 </label>
-                <select id="delivery-date-select" class="w-full bg-white border border-amber-300 rounded-xl p-3 text-sm font-bold text-amber-950 focus:outline-none focus:ring-2 focus:ring-emerald-800"></select>
+                <select id="delivery-date-select" required class="w-full bg-white border border-amber-300 rounded-xl p-3 text-sm font-bold text-amber-950 focus:outline-none focus:ring-2 focus:ring-emerald-800"></select>
             </div>
 
             <div class="border-t border-zinc-100 pt-4 bg-zinc-50/50 p-4 rounded-xl">
@@ -104,12 +109,13 @@
                 </div>
             </div>
 
-            <button onclick="submitOrder()" id="btn-submit-order" class="w-full bg-[#052219] hover:bg-emerald-950 text-white font-bold p-3.5 rounded-xl transition shadow-md flex justify-center items-center">
+            <button type="submit" id="btn-submit-order" class="w-full bg-[#052219] hover:bg-emerald-950 text-white font-bold p-3.5 rounded-xl transition shadow-md flex justify-center items-center cursor-pointer">
                 Confirm Pre-Order
             </button>
-        </div>
+        </form>
     </section>
 
+    <!-- CUSTOMER DASHBOARD & HISTORY -->
     <section id="customer-history" class="app-view max-w-md mx-auto p-4 hidden">
         <h2 class="serif text-2xl font-bold text-[#052219] my-5">Your Booking Dashboard</h2>
         <div id="history-login-warning" class="bg-amber-50 text-amber-900 border border-amber-200 p-4 rounded-2xl text-xs hidden mb-4">
@@ -122,12 +128,14 @@
         <div id="orders-history-list" class="space-y-4"></div>
     </section>
 
+    <!-- ADMIN PANEL VIEW -->
     <section id="admin-view" class="app-view max-w-6xl mx-auto p-6 hidden">
         <div class="flex gap-2 border-b border-zinc-200 pb-px mb-6 font-semibold text-xs tracking-wide uppercase">
             <button id="admin-tab-btn-live" onclick="toggleAdminSubTab('live')" class="px-4 py-2 border-b-2 border-[#052219] text-[#052219]">🍳 Live Kitchen Track</button>
             <button id="admin-tab-btn-history" onclick="toggleAdminSubTab('history')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400 hover:text-zinc-600">📊 Advanced Search History</button>
         </div>
 
+        <!-- SUB-TAB 1: LIVE MONITOR -->
         <div id="admin-subcontainer-live" class="space-y-6">
             <div class="grid grid-cols-2 md:grid-cols-5 gap-3" id="admin-counters-bar"></div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -143,6 +151,7 @@
             </div>
         </div>
 
+        <!-- SUB-TAB 2: HISTORICAL METRICS SEARCH LEDGER -->
         <div id="admin-subcontainer-history" class="space-y-6 hidden">
             <div class="bg-white border rounded-2xl p-5 shadow-sm grid grid-cols-1 sm:grid-cols-4 gap-4 items-end text-xs font-bold text-zinc-500">
                 <div>
@@ -179,6 +188,7 @@
         </div>
     </section>
 
+    <!-- RIDER DISPATCH VIEW -->
     <section id="delivery-view" class="app-view max-w-2xl mx-auto p-4 hidden">
         <div class="flex gap-2 border-b border-zinc-200 pb-px mb-4 font-semibold text-xs uppercase">
             <button id="delivery-tab-btn-live" onclick="toggleDeliverySubTab('live')" class="px-4 py-2 border-b-2 border-[#052219] text-[#052219]">📦 Today's Active Run</button>
@@ -199,6 +209,7 @@
         </div>
     </section>
 
+    <!-- MASTER CORE ENGINE -->
     <script>
         function switchView(viewId) {
             currentActivePane = viewId;
@@ -235,7 +246,7 @@
         }
 
         function generateItemTableHTML(itemsMap) {
-            if(!itemsMap || Object.keys(itemsMap).length === 0) return `<p class="text-zinc-400 italic text-[11px]">No items payload listed.</p>`;
+            if(!itemsMap || Object.keys(itemsMap).length === 0) return `<p class="text-zinc-400 italic text-[11px]">No items payload.</p>`;
             return `<div class="space-y-1 bg-zinc-50 border border-zinc-100 p-3 rounded-xl font-medium my-2">` + 
                 Object.entries(itemsMap).map(([name, qty]) => `
                     <div class="flex justify-between items-center text-xs">
@@ -323,20 +334,61 @@
             if(document.getElementById('checkout-total-amt')) document.getElementById('checkout-total-amt').innerText = "₹" + totalPrice;
         }
 
-        function submitOrder() {
+        // --- FIXED: Form Interception & Isolate Field Validation Alerts ---
+        function submitOrder(e) {
+            if (e) e.preventDefault(); // Prevents default browser form refreshes
+
             const name = document.getElementById('user-name').value.trim();
             const phone = document.getElementById('user-phone').value.trim();
             const address = document.getElementById('user-address').value.trim();
             const deliveryDate = document.getElementById('delivery-date-select').value;
-            if(!name || !phone || !/^\d{10}$/.test(phone) || !address || !deliveryDate) { alert("Complete fields and select a mandatory delivery date."); return; }
-            let totalAmount = 0; for(let name in cart) { totalAmount += (MENU.find(m => m.name === name).price * cart[name]); }
-            const btn = document.getElementById('btn-submit-order'); btn.disabled = true; btn.innerText = "Transmitting Entry...";
-            fetch(API_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "placeOrder", name: name, phone: phone, address: address, deliveryDate: deliveryDate, items: cart, total: totalAmount }) })
+            
+            // Step A: Check basic contact variables
+            if(!name || !phone || !address) {
+                alert("Please complete all fields in your destination profile."); 
+                return;
+            }
+            // Step B: Check Phone layout constraints
+            if(!/^\d{10}$/.test(phone)) {
+                alert("Please enter a valid 10-digit mobile number.");
+                return;
+            }
+            // Step C: Check Mandatory Date option choice explicitly
+            if(!deliveryDate) {
+                alert("Please select a mandatory delivery date from the highlighted schedule menu."); 
+                return;
+            }
+            // Step D: Validate Cart state payload context before compilation
+            let totalAmount = 0; 
+            let itemsInCart = 0;
+            for(let name in cart) { 
+                totalAmount += (MENU.find(m => m.name === name).price * cart[name]); 
+                itemsInCart += cart[name];
+            }
+            if(itemsInCart === 0) {
+                alert("Your cart is empty. Please select a sandwich from the menu first.");
+                switchView('customer-menu');
+                return;
+            }
+
+            const btn = document.getElementById('btn-submit-order'); 
+            btn.disabled = true; btn.innerText = "Transmitting Entry...";
+
+            const payload = { action: "placeOrder", name: name, phone: phone, address: address, deliveryDate: deliveryDate, items: cart, total: totalAmount };
+
+            fetch(API_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
             .then(() => {
                 localStorage.setItem('sandwich_user_v3', JSON.stringify({ name: name, phone: phone, address: address }));
                 userProfile = { name: name, phone: phone, address: address };
-                cart = {}; initMenuUIElements(); calculateCartTotals();
-                btn.disabled = false; btn.innerText = "Confirm Pre-Order"; openHistory();
+                cart = {}; 
+                initMenuUIElements(); 
+                calculateCartTotals();
+                btn.disabled = false; btn.innerText = "Confirm Pre-Order"; 
+                openHistory(); // Clean routing transition on execution completion
+            }).catch(err => {
+                console.error(err);
+                alert("Network link slow. Re-trying...");
+                btn.disabled = false; btn.innerText = "Confirm Pre-Order";
             });
         }
 
@@ -494,7 +546,7 @@
                             ${generateItemTableHTML(order.ItemsBreakdown)}
                             <div class="bg-zinc-50 p-3 rounded-xl text-zinc-600 space-y-1 text-[11px] font-medium">
                                 <p><strong>Customer:</strong> ${order.CustomerName}</p>
-                                <p><strong>Call:</strong> <a href="tel:${order.Phone}" class="text-emerald-800 underline font-bold">${order.Phone}</a></p>
+                                <p><strong>Call Line:</strong> <a href="tel:${order.Phone}" class="text-emerald-800 underline font-bold">${order.Phone}</a></p>
                                 <p><strong>Address:</strong> ${order.Address}</p>
                                 <p><strong>Date:</strong> ${formatHumanDate(order.DeliveryDate)}</p>
                             </div>
@@ -535,7 +587,6 @@
             container.innerHTML = configs.map(l => `<div class="p-3 bg-white border rounded-xl text-center shadow-sm ${l.style}"><p class="text-[10px] uppercase font-bold tracking-wider opacity-60">${l.title}</p><p class="text-xl font-black mt-0.5">${l.count}</p></div>`).join('');
         }
 
-        // --- AUTHENTICATION INITIALIZATION ROUTER CHAIN ---
         function checkUrlParametersForSecureRoutes() {
             const urlParams = new URLSearchParams(window.location.search);
             const pane = urlParams.get('pane');
@@ -596,11 +647,10 @@
                 </div>`).join('');
         }
 
-        // --- LIFECYCLE CONTROLLER ---
         window.addEventListener('DOMContentLoaded', () => {
-            initMenuUIElements(); // Renders static layout grids instantly
-            initDateSelectors();  // Compiles tomorrow parameters text elements
-            checkUrlParametersForSecureRoutes(); // Authenticates secure link channels
+            initMenuUIElements(); 
+            initDateSelectors();  
+            checkUrlParametersForSecureRoutes(); 
         });
 
         setInterval(() => {

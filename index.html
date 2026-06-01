@@ -74,7 +74,7 @@
             <h2 class="serif text-2xl font-bold text-[#052219] mt-2">Logistics Routing</h2>
         </div>
 
-        <form onsubmit="submitOrder(event)" class="bg-white p-6 rounded-3xl border border-zinc-200/60 shadow-sm space-y-5">
+        <form id="checkout-form" class="bg-white p-6 rounded-3xl border border-zinc-200/60 shadow-sm space-y-5">
             <div class="space-y-4">
                 <label class="block text-[11px] uppercase tracking-wider font-bold text-zinc-400">1. Delivery Destination Profile</label>
                 <div>
@@ -124,11 +124,11 @@
 
     <section id="admin-view" class="app-view max-w-6xl mx-auto p-6 hidden">
         <div class="flex gap-2 border-b border-zinc-200 pb-px mb-6 font-semibold text-xs tracking-wide uppercase">
-            <button id="admin-tab-btn-live" onclick="toggleAdminSubTab('live')" class="px-4 py-2 border-b-2 border-[#052219] text-[#052219]">🍳 Live Kitchen Track</button>
-            <button id="admin-tab-btn-history" onclick="toggleAdminSubTab('history')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400 hover:text-zinc-600">📊 Advanced Search History</button>
+            <button id="admin-tab-btn-live" onclick="toggleAdminSubTab('live')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">🍳 Live Kitchen Track</button>
+            <button id="admin-tab-btn-history" onclick="toggleAdminSubTab('history')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">📊 Advanced Search History</button>
         </div>
 
-        <div id="admin-subcontainer-live" class="space-y-6">
+        <div id="admin-subcontainer-live" class="space-y-6 hidden">
             <div class="grid grid-cols-2 md:grid-cols-5 gap-3" id="admin-counters-bar"></div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2 space-y-4">
@@ -181,11 +181,11 @@
 
     <section id="delivery-view" class="app-view max-w-2xl mx-auto p-4 hidden">
         <div class="flex gap-2 border-b border-zinc-200 pb-px mb-4 font-semibold text-xs uppercase">
-            <button id="delivery-tab-btn-live" onclick="toggleDeliverySubTab('live')" class="px-4 py-2 border-b-2 border-[#052219] text-[#052219]">📦 Today's Active Run</button>
-            <button id="delivery-tab-btn-history" onclick="toggleDeliverySubTab('history')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400 hover:text-zinc-600">🗄️ Rider Ledger</button>
+            <button id="delivery-tab-btn-live" onclick="toggleDeliverySubTab('live')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">📦 Today's Active Run</button>
+            <button id="delivery-tab-btn-history" onclick="toggleDeliverySubTab('history')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">🗄️ Rider Ledger</button>
         </div>
 
-        <div id="delivery-subcontainer-live" class="space-y-4">
+        <div id="delivery-subcontainer-live" class="space-y-4 hidden">
             <div class="grid grid-cols-3 gap-2 text-center text-xs" id="delivery-counters-bar"></div>
             <div id="delivery-queue-list" class="space-y-3"></div>
         </div>
@@ -243,6 +243,14 @@
                         <div class="flex-grow mx-2 border-b border-dashed border-zinc-200"></div>
                         <span class="bg-[#052219] text-white text-[11px] px-2 py-0.5 rounded-md font-black min-w-[32px] text-center">×${qty}</span>
                     </div>`).join('') + `</div>`;
+        }
+
+        function formatHumanDate(dateStr) {
+            if(!dateStr) return '';
+            const normalized = dateStr.split('T')[0]; 
+            const dateObj = new Date(normalized);
+            if(isNaN(dateObj.getTime())) return dateStr;
+            return dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
         }
 
         function updateNavbarDesignUI(viewId) {
@@ -315,9 +323,9 @@
             if(document.getElementById('checkout-total-amt')) document.getElementById('checkout-total-amt').innerText = "₹" + totalPrice;
         }
 
-        // --- FIXED: Form Event Isolation & Clean Error Routing Outputs ---
+        // --- NATIVE SECURE DATA TRANSMISSION CHANNEL ---
         function submitOrder(e) {
-            if (e) e.preventDefault(); 
+            if (e) e.preventDefault(); // HALTS ALL NATIVE BROWSER RELOADS
 
             const name = document.getElementById('user-name').value.trim();
             const phone = document.getElementById('user-phone').value.trim();
@@ -337,7 +345,7 @@
             const btn = document.getElementById('btn-submit-order'); 
             if(btn) { btn.disabled = true; btn.innerText = "Transmitting Entry..."; }
 
-            // FIXED: Uses secure JSONP stream routing to avoid browser 302/POST blocks completely
+            // Passes directly over stable JSONP layers to avoid cross-domain blocks completely
             requestDatabaseQuery({
                 action: "placeOrder",
                 name: name,
@@ -577,6 +585,7 @@
             if (pane === 'admin') {
                 if (prompt("Enter Access PIN:") === ADMIN_PIN) { 
                     switchView('admin-view'); 
+                    toggleAdminSubTab('live');
                     loadAdminData(); 
                 } else { 
                     alert("Denied."); 
@@ -585,6 +594,7 @@
             } else if (pane === 'delivery') {
                 if (prompt("Enter Rider PIN:") === DELIVERY_PIN) { 
                     switchView('delivery-view'); 
+                    toggleDeliverySubTab('live');
                     loadDeliveryData(); 
                 } else { 
                     alert("Denied."); 
@@ -630,11 +640,42 @@
                 </div>`).join('');
         }
 
-        // --- LIFECYCLE CONTROLLER ---
+        function reloadHistoryFromInput() {
+            const phone = document.getElementById('history-phone-input').value.trim();
+            if(!phone || !/^\d{10}$/.test(phone)) { alert("Enter 10-digit number."); return; }
+            userProfile = { name: "User", phone: phone, address: "" }; localStorage.setItem('sandwich_user_v3', JSON.stringify(userProfile));
+            document.getElementById('history-login-warning').classList.add('hidden'); openHistory();
+        }
+
+        function openHistory() {
+            switchView('customer-history');
+            if(!userProfile || !userProfile.phone) { document.getElementById('history-login-warning').classList.remove('hidden'); return; }
+            document.getElementById('history-login-warning').classList.add('hidden');
+            requestDatabaseQuery({ action: "getOrders" }, "handleHistoryDataResponse");
+        }
+
+        function returnToMainStorefront() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if(!urlParams.get('pane')) { switchView('customer-menu'); }
+        }
+
+        // --- CORE LIFECYCLE DOM LISTENERS BINDINGS ---
         window.addEventListener('DOMContentLoaded', () => {
             initMenuUIElements(); 
             initDateSelectors();  
             checkUrlParametersForSecureRoutes(); 
+            
+            // FIXED: Standard event handler completely eliminates inline form reloads
+            const form = document.getElementById('checkout-form');
+            if(form) { form.addEventListener('submit', submitOrder); }
+
+            // Restore customer fields from local profiles
+            if(userProfile) {
+                if(document.getElementById('user-name') && userProfile.name) document.getElementById('user-name').value = userProfile.name;
+                if(document.getElementById('user-phone') && userProfile.phone) document.getElementById('user-phone').value = userProfile.phone;
+                if(document.getElementById('user-address') && userProfile.address) document.getElementById('user-address').value = userProfile.address;
+            }
+
             requestDatabaseQuery({ action: "getOrders" }, "handleInitialLoadCacheResponse");
         });
 

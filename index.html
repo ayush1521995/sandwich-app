@@ -287,27 +287,12 @@
                         <button onclick="updateCart('${item.name}', 1)" class="w-7 h-7 rounded-lg bg-[#052219] text-white flex items-center justify-center font-bold text-xs shadow-sm">+</button>
                     </div>
                 </div>`).join('');
-            
-            // Core Boot Query Trigger
-            requestDatabaseQuery({ action: "getMenu" }, "handleInitialMenuFetchResponse");
         }
-
-        window.handleInitialMenuFetchResponse = function(res) {
-            // Unlocks storefront layers on completion
-            const activeHash = window.location.hash.replace('#','');
-            if(activeHash && document.getElementById(activeHash)) {
-                switchView(activeHash);
-                if(activeHash === 'admin-view') loadAdminData();
-                if(activeHash === 'delivery-view') loadDeliveryData();
-                if(activeHash === 'customer-history') openHistory();
-            } else {
-                checkUrlParametersForSecureRoutes();
-            }
-        };
 
         function initDateSelectors() {
             const selectCheckout = document.getElementById('delivery-date-select');
             const selectAdmin = document.getElementById('admin-forecast-date');
+            
             let optionsHtml = `<option value="">-- Choose Mandatory Delivery Date --</option>`;
             for(let i=1; i<=3; i++) {
                 let d = new Date(); d.setDate(d.getDate() + i);
@@ -315,7 +300,7 @@
                 let humanReadable = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
                 optionsHtml += `<option value="${dateString}">${humanReadable}</option>`;
             }
-            selectCheckout.innerHTML = optionsHtml;
+            if(selectCheckout) selectCheckout.innerHTML = optionsHtml;
             if(selectAdmin) selectAdmin.innerHTML = optionsHtml.replace('<option value="">-- Choose Mandatory Delivery Date --</option>', '');
         }
 
@@ -393,6 +378,7 @@
             const startDate = document.getElementById('admin-date-start').value;
             const endDate = document.getElementById('admin-date-end').value;
             const archiveBox = document.getElementById('admin-archive-list');
+            if(!archiveBox) return;
             
             let filtered = globalOrdersCache.filter(o => o.Status !== "Ordered");
             if(startDate) { filtered = filtered.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] >= startDate); }
@@ -431,6 +417,8 @@
             runKitchenForecast();
             const pending = globalOrdersCache.filter(o => o.Status === "Ordered");
             const queue = document.getElementById('admin-queue-list');
+            if(!queue) return;
+            
             if(pending.length === 0) {
                 queue.innerHTML = `<p class="text-xs text-zinc-400 py-6 bg-zinc-50 border rounded-2xl text-center">All clear. No incoming orders.</p>`;
             } else {
@@ -460,7 +448,7 @@
 
         window.handleHistoryDataResponse = function(response) {
             const container = document.getElementById('orders-history-list');
-            if(!response || !response.success) return;
+            if(!container || !response || !response.success) return;
             globalOrdersCache = response.data || [];
             const phone = userProfile ? userProfile.phone : '';
             const filtered = globalOrdersCache.filter(order => String(order.Phone) === String(phone));
@@ -493,6 +481,8 @@
             const active = globalOrdersCache.filter(o => o.Status === "Accepted");
             const historyList = globalOrdersCache.filter(o => o.Status === "Delivered" || o.Status === "Refused");
             const list = document.getElementById('delivery-queue-list');
+            if(!list) return;
+            
             if(active.length === 0) {
                 list.innerHTML = `<p class="text-xs text-zinc-400 text-center py-8 bg-zinc-50 border rounded-2xl border-dashed">No accepted runs ready.</p>`;
             } else {
@@ -519,12 +509,16 @@
             historyList.forEach(o => { if(o.Status === "Delivered") { cash += Number(o.TotalAmount) || 0; success++; } });
             document.getElementById('rider-history-cash-count').innerText = "₹" + cash;
             document.getElementById('rider-history-delivery-count').innerText = `${success} Run(s)`;
-            document.getElementById('delivery-archive-list').innerHTML = historyList.map(o => `
-                <div class="bg-white p-4 border rounded-xl text-xs space-y-1 font-medium">
-                    <div class="flex justify-between items-center"><span><strong>${o.OrderID}</strong> • ${o.CustomerName}</span><span class="font-bold uppercase text-[9px] px-2 py-0.5 rounded-md ${o.Status==='Delivered'?'text-emerald-800 bg-emerald-50':'text-rose-700 bg-rose-50'}">${o.Status}</span></div>
-                    <p class="text-[11px] text-zinc-400">📍 Drop: ${o.Address} | Date: ${formatHumanDate(o.DeliveryDate)}</p>
-                    <p class="text-zinc-900 font-bold text-[11px]">Value: ₹${o.TotalAmount}</p>
-                </div>`).join('');
+            
+            const archiveEl = document.getElementById('delivery-archive-list');
+            if(archiveEl) {
+                archiveEl.innerHTML = historyList.map(o => `
+                    <div class="bg-white p-4 border rounded-xl text-xs space-y-1 font-medium">
+                        <div class="flex justify-between items-center"><span><strong>${o.OrderID}</strong> • ${o.CustomerName}</span><span class="font-bold uppercase text-[9px] px-2 py-0.5 rounded-md ${o.Status==='Delivered'?'text-emerald-800 bg-emerald-50':'text-rose-700 bg-rose-50'}">${o.Status}</span></div>
+                        <p class="text-[11px] text-zinc-400">📍 Drop: ${o.Address} | Date: ${formatHumanDate(o.DeliveryDate)}</p>
+                        <p class="text-zinc-900 font-bold text-[11px]">Value: ₹${o.TotalAmount}</p>
+                    </div>`).join('');
+            }
         };
 
         function buildDashboardAnalyticsWidgets(orders, containerId) {
@@ -536,57 +530,4 @@
                 { title: "Accepted Prep", count: m.Accepted, style: "bg-emerald-50 text-emerald-800 border-emerald-200" },
                 { title: "Delivered", count: m.Delivered, style: "bg-blue-50 text-blue-800 border-blue-200" },
                 { title: "Rejected", count: m.Rejected, style: "bg-zinc-100 text-zinc-500 border-zinc-200" },
-                { title: "Refused / Cancel", count: (m.Refused + m.Cancelled), style: "bg-rose-50 text-rose-800 border-rose-200" }
-            ];
-            container.innerHTML = configs.map(l => `<div class="p-3 bg-white border rounded-xl text-center shadow-sm ${l.style}"><p class="text-[10px] uppercase font-bold tracking-wider opacity-60">${l.title}</p><p class="text-xl font-black mt-0.5">${l.count}</p></div>`).join('');
-        }
-
-        function checkUrlParametersForSecureRoutes() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const pane = urlParams.get('pane');
-            if (pane === 'admin') {
-                if (prompt("Enter Access PIN:") === ADMIN_PIN) { switchView('admin-view'); loadAdminData(); } 
-                else { alert("Denied."); window.location.href = window.location.pathname; }
-            } else if (pane === 'delivery') {
-                if (prompt("Enter Rider PIN:") === DELIVERY_PIN) { switchView('delivery-view'); loadDeliveryData(); } 
-                else { alert("Denied."); window.location.href = window.location.pathname; }
-            } else {
-                switchView('customer-menu');
-            }
-        }
-
-        function returnToMainStorefront() {
-            const urlParams = new URLSearchParams(window.location.search);
-            if(!urlParams.get('pane')) { switchView('customer-menu'); }
-        }
-
-        function reloadHistoryFromInput() {
-            const phone = document.getElementById('history-phone-input').value.trim();
-            if(!phone || !/^\d{10}$/.test(phone)) { alert("Enter 10-digit number."); return; }
-            userProfile = { name: "User", phone: phone, address: "" }; localStorage.setItem('sandwich_user_v3', JSON.stringify(userProfile));
-            document.getElementById('history-login-warning').classList.add('hidden'); openHistory();
-        }
-
-        function openHistory() {
-            switchView('customer-history');
-            if(!userProfile || !userProfile.phone) { document.getElementById('history-login-warning').classList.remove('hidden'); return; }
-            document.getElementById('history-login-warning').classList.add('hidden');
-            requestDatabaseQuery({ action: "getOrders" }, "handleHistoryDataResponse");
-        }
-
-        function loadAdminData() { requestDatabaseQuery({ action: "getOrders" }, "handleAdminDataResponse"); }
-        function loadDeliveryData() { requestDatabaseQuery({ action: "getOrders" }, "handleDeliveryDataResponse"); }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            initMenu();
-            initDateSelectors();
-        });
-
-        setInterval(() => {
-            if (currentActivePane === 'admin-view') loadAdminData();
-            else if (currentActivePane === 'delivery-view') loadDeliveryData();
-            else if (currentActivePane === 'customer-history' && userProfile?.phone) requestDatabaseQuery({ action: "getOrders" }, "handleHistoryDataResponse");
-        }, 15000);
-    </script>
-</body>
-</html>
+                { title: "Refused /

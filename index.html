@@ -6,7 +6,7 @@
     <title>The Cold Press - Gourmet Cold Sandwiches</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght@300..700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght=300..700&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8F7F4; }
         .serif { font-family: 'Playfair Display', serif; }
         .order-card-hide { opacity: 0; transform: scale(0.95); transition: all 0.3s ease-out; }
@@ -52,9 +52,7 @@
             <h2 class="serif text-3xl md:text-4xl font-semibold text-[#052219] tracking-tight">Today's Fresh Prep</h2>
             <p class="text-xs text-zinc-500 mt-2 max-w-xs mx-auto leading-relaxed">Artisanal, nutrient-dense cold layers prepared daily. Pre-order for the next 3 days.</p>
         </div>
-
         <div class="space-y-4" id="menu-container"></div>
-
         <div id="cart-sticky" class="fixed bottom-4 left-4 right-4 max-w-md mx-auto bg-[#052219] text-white p-4 rounded-2xl shadow-xl hidden z-40 transform transition-all duration-300">
             <div class="flex justify-between items-center">
                 <div>
@@ -73,7 +71,6 @@
             <button onclick="switchView('customer-menu')" class="text-xs text-emerald-800 font-bold tracking-wide flex items-center gap-1">← Modify Selected Items</button>
             <h2 class="serif text-2xl font-bold text-[#052219] mt-2">Logistics Routing</h2>
         </div>
-
         <form id="checkout-form" class="bg-white p-6 rounded-3xl border border-zinc-200/60 shadow-sm space-y-5">
             <div class="space-y-4">
                 <label class="block text-[11px] uppercase tracking-wider font-bold text-zinc-400">1. Delivery Destination Profile</label>
@@ -87,14 +84,12 @@
                     <textarea id="user-address" rows="3" placeholder="Full Dropoff Address Details" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-3 text-sm focus:outline-none focus:border-emerald-800"></textarea>
                 </div>
             </div>
-
             <div class="bg-amber-50 border-2 border-amber-400 p-4 rounded-2xl space-y-1.5">
                 <label class="block text-xs uppercase tracking-wider font-black text-amber-950 flex items-center gap-1">
                     📅 2. Select Mandatory Delivery Date
                 </label>
                 <select id="delivery-date-select" class="w-full bg-white border border-amber-300 rounded-xl p-3 text-sm font-bold text-amber-950 focus:outline-none focus:ring-2 focus:ring-emerald-800"></select>
             </div>
-
             <div class="border-t border-zinc-100 pt-4 bg-zinc-50/50 p-4 rounded-xl">
                 <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Item Summary</p>
                 <div id="checkout-items-list" class="space-y-2 text-xs font-medium text-zinc-700"></div>
@@ -103,7 +98,6 @@
                     <span id="checkout-total-amt" class="text-[#052219]">₹0</span>
                 </div>
             </div>
-
             <button type="submit" id="btn-submit-order" class="w-full bg-[#052219] hover:bg-emerald-950 text-white font-bold p-3.5 rounded-xl transition shadow-md flex justify-center items-center cursor-pointer">
                 Confirm Pre-Order
             </button>
@@ -125,14 +119,13 @@
     <section id="admin-view" class="app-view max-w-6xl mx-auto p-6 hidden">
         <div class="flex gap-2 border-b border-zinc-200 pb-px mb-6 font-semibold text-xs tracking-wide uppercase">
             <button id="admin-tab-btn-live" onclick="toggleAdminSubTab('live')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">🍳 Live Kitchen Track</button>
-            <button id="admin-tab-btn-history" onclick="toggleAdminSubTab('history')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">📊 Advanced Search History</button>
+            <button id="admin-tab-btn-history" onclick="toggleAdminSubTab('history')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">📊 Dashboard & History Search</button>
         </div>
 
         <div id="admin-subcontainer-live" class="space-y-6 hidden">
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-3" id="admin-counters-bar"></div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2 space-y-4">
-                    <h3 class="text-xs font-bold uppercase tracking-widest text-zinc-400">📥 Actions Pending Streams</h3>
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-zinc-400">📥 Live Incoming Streams (Unprocessed Only)</h3>
                     <div id="admin-queue-list" class="space-y-3"></div>
                 </div>
                 <div class="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm space-y-4 h-fit">
@@ -148,6 +141,7 @@
                 <div>
                     <label class="block mb-1 text-[10px] uppercase">Scope Filter Range</label>
                     <select id="admin-date-range-preset" onchange="applyAdminHistoryDatePresets()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
+                        <option value="">-- Choose Timeline --</option>
                         <option value="all">All Lifetime Data</option>
                         <option value="today">Today's Pool</option>
                         <option value="weekly">Past 7 Days (Weekly)</option>
@@ -157,49 +151,86 @@
                 </div>
                 <div>
                     <label class="block mb-1 text-[10px] uppercase">Start Date</label>
-                    <input type="date" id="admin-date-start" onchange="filterAdminArchiveLedger()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
+                    <input type="date" id="admin-date-start" onchange="triggerAdminHistoryFilteredSearch()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
                 </div>
                 <div>
                     <label class="block mb-1 text-[10px] uppercase">End Date</label>
-                    <input type="date" id="admin-date-end" onchange="filterAdminArchiveLedger()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
+                    <input type="date" id="admin-date-end" onchange="triggerAdminHistoryFilteredSearch()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
                 </div>
                 <div>
                     <label class="block mb-1 text-[10px] uppercase">Filter Text Search</label>
-                    <input type="text" id="admin-search-input" oninput="filterAdminArchiveLedger()" placeholder="Search Name, Phone, or ID..." class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none focus:border-emerald-800">
+                    <input type="text" id="admin-search-input" oninput="triggerAdminHistoryFilteredSearch()" placeholder="Search Name, Phone, or ID..." class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none focus:border-emerald-800">
                 </div>
             </div>
             
-            <div class="bg-emerald-950 text-[#F3EDE4] p-4 rounded-xl flex justify-around text-center text-xs shadow-sm font-bold">
-                <div><p class="opacity-60 text-[10px] uppercase">Total Scoped Records</p><p class="text-xl font-black mt-0.5" id="history-widget-total-count">0</p></div>
-                <div class="border-l border-emerald-900"></div>
-                <div><p class="opacity-60 text-[10px] uppercase">Total Scoped Revenue</p><p class="text-xl font-black mt-0.5 text-amber-400" id="history-widget-total-value">₹0</p></div>
+            <div id="admin-history-dashboard-wrapper" class="space-y-6 hidden">
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-3" id="admin-counters-bar"></div>
+                <div class="bg-emerald-950 text-[#F3EDE4] p-4 rounded-xl flex justify-around text-center text-xs shadow-sm font-bold">
+                    <div><p class="opacity-60 text-[10px] uppercase">Scoped Records Count</p><p class="text-xl font-black mt-0.5" id="history-widget-total-count">0</p></div>
+                    <div class="border-l border-emerald-900"></div>
+                    <div><p class="opacity-60 text-[10px] uppercase">Scoped Successful Revenue</p><p class="text-xl font-black mt-0.5 text-amber-400" id="history-widget-total-value">₹0</p></div>
+                </div>
+                <div id="admin-archive-list" class="space-y-3"></div>
             </div>
-
-            <div id="admin-archive-list" class="space-y-3"></div>
+            <div id="admin-history-dormant-prompt" class="py-12 bg-zinc-50 border border-dashed rounded-2xl text-center text-xs text-zinc-400 font-medium">
+                ⚠️ Select a scope filter range or enter look-up text values to populate logs dashboard.
+            </div>
         </div>
     </section>
 
     <section id="delivery-view" class="app-view max-w-2xl mx-auto p-4 hidden">
         <div class="flex gap-2 border-b border-zinc-200 pb-px mb-4 font-semibold text-xs uppercase">
             <button id="delivery-tab-btn-live" onclick="toggleDeliverySubTab('live')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">📦 Today's Active Run</button>
-            <button id="delivery-tab-btn-history" onclick="toggleDeliverySubTab('history')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">🗄️ Rider Ledger</button>
+            <button id="delivery-tab-btn-history" onclick="toggleDeliverySubTab('history')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">🗄️ Rider Ledger Dashboard</button>
         </div>
 
         <div id="delivery-subcontainer-live" class="space-y-4 hidden">
-            <div class="grid grid-cols-3 gap-2 text-center text-xs" id="delivery-counters-bar"></div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs font-bold" id="delivery-live-counters-bar"></div>
             <div id="delivery-queue-list" class="space-y-3"></div>
         </div>
 
         <div id="delivery-subcontainer-history" class="space-y-4 hidden">
-            <div class="bg-indigo-950 text-white p-4 rounded-2xl flex justify-between items-center shadow-sm">
-                <div><p class="text-[10px] uppercase opacity-60 font-bold">Total Cash Collected</p><p class="text-2xl font-black text-emerald-400" id="rider-history-cash-count">₹0</p></div>
-                <div class="text-right"><p class="text-[10px] uppercase opacity-60 font-bold">Successful Drops</p><p class="text-xl font-bold" id="rider-history-delivery-count">0 Run(s)</p></div>
+            <div class="bg-white border rounded-2xl p-4 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-3 items-end text-xs font-bold text-zinc-500">
+                <div>
+                    <label class="block mb-1 text-[10px] uppercase">Select Window</label>
+                    <select id="delivery-date-range-preset" onchange="applyDeliveryHistoryPresets()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
+                        <option value="">-- Choose Timeline --</option>
+                        <option value="all">Lifetime History</option>
+                        <option value="yesterday">Yesterday</option>
+                        <option value="weekly">Past 7 Days</option>
+                        <option value="custom">Custom Date Range</option>
+                    </select>
+                </div>
+                <div>
+                    <input type="date" id="delivery-date-start" onchange="triggerDeliveryHistorySearch()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
+                </div>
+                <div>
+                    <input type="text" id="delivery-search-input" oninput="triggerDeliveryHistorySearch()" placeholder="Search Name, Phone, or ID..." class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none focus:border-emerald-800">
+                </div>
             </div>
-            <div id="delivery-archive-list" class="space-y-2"></div>
+
+            <div id="delivery-history-dashboard-wrapper" class="space-y-4 hidden">
+                <div class="bg-indigo-950 text-white p-4 rounded-2xl flex justify-between items-center shadow-sm text-center text-xs font-bold">
+                    <div class="w-1/2 border-r border-indigo-900"><p class="text-[10px] uppercase opacity-60">Revenue Collected</p><p class="text-xl font-black text-emerald-400 mt-0.5" id="rider-history-cash-count">₹0</p></div>
+                    <div class="w-1/2"><p class="text-[10px] uppercase opacity-60">Delivered Drops</p><p class="text-xl font-black text-white mt-0.5" id="rider-history-delivery-count">0 Run(s)</p></div>
+                </div>
+                <div id="delivery-archive-list" class="space-y-2"></div>
+            </div>
+            <div id="delivery-history-dormant-prompt" class="py-12 bg-zinc-50 border border-dashed rounded-2xl text-center text-xs text-zinc-400 font-medium">
+                ⚠️ Specify ledger presets or enter target keywords to populate history logs.
+            </div>
         </div>
     </section>
 
     <script>
+        function getLocalTodayString() {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
         function switchView(viewId) {
             currentActivePane = viewId;
             document.querySelectorAll('.app-view').forEach(view => view.classList.add('hidden'));
@@ -215,7 +246,17 @@
             document.getElementById('admin-tab-btn-history').className = `px-4 py-2 border-b-2 ${target==='history'?'border-[#052219] text-[#052219]':'border-transparent text-zinc-400'}`;
             document.getElementById('admin-subcontainer-live').classList.toggle('hidden', target !== 'live');
             document.getElementById('admin-subcontainer-history').classList.toggle('hidden', target !== 'history');
-            if(target === 'history') filterAdminArchiveLedger();
+            
+            if(target === 'live') {
+                loadAdminData();
+            } else {
+                document.getElementById('admin-date-range-preset').value = "";
+                document.getElementById('admin-date-start').value = "";
+                document.getElementById('admin-date-end').value = "";
+                document.getElementById('admin-search-input').value = "";
+                document.getElementById('admin-history-dashboard-wrapper').classList.add('hidden');
+                document.getElementById('admin-history-dormant-prompt').classList.remove('hidden');
+            }
         }
 
         function toggleDeliverySubTab(target) {
@@ -224,6 +265,16 @@
             document.getElementById('delivery-tab-btn-history').className = `px-4 py-2 border-b-2 ${target==='history'?'border-[#052219] text-[#052219]':'border-transparent text-zinc-400'}`;
             document.getElementById('delivery-subcontainer-live').classList.toggle('hidden', target !== 'live');
             document.getElementById('delivery-subcontainer-history').classList.toggle('hidden', target !== 'history');
+            
+            if(target === 'live') {
+                loadDeliveryData();
+            } else {
+                document.getElementById('delivery-date-range-preset').value = "";
+                document.getElementById('delivery-date-start').value = "";
+                document.getElementById('delivery-search-input').value = "";
+                document.getElementById('delivery-history-dashboard-wrapper').classList.add('hidden');
+                document.getElementById('delivery-history-dormant-prompt').classList.remove('hidden');
+            }
         }
 
         function generateUserCredibilityBadge(totalOrders, totalRefusals) {
@@ -289,19 +340,31 @@
                 </div>`).join('');
         }
 
+        // --- TIMEZONE-SAFE LOCAL DATE DROPDOWNS GENERATORS ---
         function initDateSelectors() {
             const selectCheckout = document.getElementById('delivery-date-select');
             const selectAdmin = document.getElementById('admin-forecast-date');
             
-            let optionsHtml = `<option value="">-- Choose Mandatory Delivery Date --</option>`;
+            // Checkout Dropdown: Next 3 Days strictly from Tomorrow
+            let checkoutOptionsHtml = `<option value="">-- Choose Mandatory Delivery Date --</option>`;
             for(let i=1; i<=3; i++) {
                 let d = new Date(); d.setDate(d.getDate() + i);
-                let dateString = d.toISOString().split('T')[0];
+                let dateString = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
                 let humanReadable = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-                optionsHtml += `<option value="${dateString}">${humanReadable}</option>`;
+                checkoutOptionsHtml += `<option value="${dateString}">${humanReadable}</option>`;
             }
-            if(selectCheckout) selectCheckout.innerHTML = optionsHtml;
-            if(selectAdmin) selectAdmin.innerHTML = optionsHtml.replace('<option value="">-- Choose Mandatory Delivery Date --</option>', '');
+            if(selectCheckout) selectCheckout.innerHTML = checkoutOptionsHtml;
+            
+            // Admin Forecast Dropdown: Includes TODAY as baseline default
+            let adminOptionsHtml = "";
+            for(let i=0; i<=3; i++) {
+                let d = new Date(); d.setDate(d.getDate() + i);
+                let dateString = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                let prefix = (i === 0) ? "Today - " : "";
+                let humanReadable = prefix + d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                adminOptionsHtml += `<option value="${dateString}">${humanReadable}</option>`;
+            }
+            if(selectAdmin) selectAdmin.innerHTML = adminOptionsHtml;
         }
 
         function updateCart(itemName, change) {
@@ -323,9 +386,8 @@
             if(document.getElementById('checkout-total-amt')) document.getElementById('checkout-total-amt').innerText = "₹" + totalPrice;
         }
 
-        // --- NATIVE SECURE DATA TRANSMISSION CHANNEL ---
         function submitOrder(e) {
-            if (e) e.preventDefault(); // HALTS ALL NATIVE BROWSER RELOADS
+            if (e) e.preventDefault(); 
 
             const name = document.getElementById('user-name').value.trim();
             const phone = document.getElementById('user-phone').value.trim();
@@ -345,7 +407,6 @@
             const btn = document.getElementById('btn-submit-order'); 
             if(btn) { btn.disabled = true; btn.innerText = "Transmitting Entry..."; }
 
-            // Passes directly over stable JSONP layers to avoid cross-domain blocks completely
             requestDatabaseQuery({
                 action: "placeOrder",
                 name: name,
@@ -388,8 +449,6 @@
             if(cachedOrder) {
                 cachedOrder.Status = status; 
                 runKitchenForecast();
-                if(currentActivePane === 'admin-view') buildDashboardAnalyticsWidgets(globalOrdersCache, 'admin-counters-bar');
-                if(currentActivePane === 'delivery-view') buildDashboardAnalyticsWidgets(globalOrdersCache, 'delivery-counters-bar');
             }
             requestDatabaseQuery({ action: "updateStatus", orderId: orderId, status: status }, "handleStatusMutationResponse");
         }
@@ -399,42 +458,64 @@
             if(currentActivePane === 'delivery-view') loadDeliveryData();
         };
 
+        // --- SEARCH INTEL ENGINE & SCOPED ANALYTICS CONSTRUCTORS ---
         function applyAdminHistoryDatePresets() {
             const preset = document.getElementById('admin-date-range-preset').value;
             const startInput = document.getElementById('admin-date-start');
             const endInput = document.getElementById('admin-date-end');
-            const todayStr = new Date().toISOString().split('T')[0];
+            const todayStr = getLocalTodayString();
+            
+            if(!preset) return;
+            
             if(preset === 'all') { startInput.value = ''; endInput.value = ''; }
             else if(preset === 'today') { startInput.value = todayStr; endInput.value = todayStr; }
             else if(preset === 'weekly') {
                 let d = new Date(); d.setDate(d.getDate() - 7);
-                startInput.value = d.toISOString().split('T')[0]; endInput.value = todayStr;
+                startInput.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; 
+                endInput.value = todayStr;
             } else if(preset === 'monthly') {
                 let d = new Date(); d.setDate(d.getDate() - 30);
-                startInput.value = d.toISOString().split('T')[0]; endInput.value = todayStr;
+                startInput.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; 
+                endInput.value = todayStr;
             }
-            filterAdminArchiveLedger();
+            triggerAdminHistoryFilteredSearch();
         }
 
-        function filterAdminArchiveLedger() {
+        function triggerAdminHistoryFilteredSearch() {
             const query = document.getElementById('admin-search-input').value.toLowerCase().trim();
             const startDate = document.getElementById('admin-date-start').value;
             const endDate = document.getElementById('admin-date-end').value;
-            const archiveBox = document.getElementById('admin-archive-list');
-            if(!archiveBox) return;
+            const preset = document.getElementById('admin-date-range-preset').value;
             
+            const wrapper = document.getElementById('admin-history-dashboard-wrapper');
+            const promptEl = document.getElementById('admin-history-dormant-prompt');
+            const archiveBox = document.getElementById('admin-archive-list');
+
+            // Rule: Keep blank/dormant until a lookup parameter is touched
+            if(!preset && !startDate && !endDate && !query) {
+                wrapper.classList.add('hidden');
+                promptEl.classList.remove('hidden');
+                return;
+            }
+
+            wrapper.classList.remove('hidden');
+            promptEl.classList.add('hidden');
+
             let filtered = globalOrdersCache.filter(o => o.Status !== "Ordered");
             if(startDate) { filtered = filtered.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] >= startDate); }
             if(endDate) { filtered = filtered.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] <= endDate); }
             if(query) {
                 filtered = filtered.filter(o => o.OrderID.toLowerCase().includes(query) || o.CustomerName.toLowerCase().includes(query) || String(o.Phone).includes(query));
             }
+
+            buildDashboardAnalyticsWidgets(filtered, 'admin-counters-bar');
+            
             let totalVolumeValue = 0; filtered.forEach(o => { if(o.Status === "Delivered") totalVolumeValue += Number(o.TotalAmount) || 0; });
             document.getElementById('history-widget-total-count').innerText = filtered.length;
             document.getElementById('history-widget-total-value').innerText = "₹" + totalVolumeValue;
 
             if(filtered.length === 0) {
-                archiveBox.innerHTML = `<p class="text-xs text-zinc-400 italic text-center py-6 bg-zinc-50 border border-dashed rounded-xl">No historical records match parameters.</p>`;
+                archiveBox.innerHTML = `<p class="text-xs text-zinc-400 italic text-center py-6 bg-zinc-50 border border-dashed rounded-xl">No historical logs match parameters.</p>`;
                 return;
             }
             archiveBox.innerHTML = filtered.map(order => {
@@ -453,11 +534,67 @@
             }).join('');
         }
 
+        function applyDeliveryHistoryPresets() {
+            const preset = document.getElementById('delivery-date-range-preset').value;
+            const startInput = document.getElementById('delivery-date-start');
+            const todayStr = getLocalTodayString();
+            if(!preset) return;
+            if(preset === 'all') { startInput.value = ''; }
+            else if(preset === 'yesterday') {
+                let d = new Date(); d.setDate(d.getDate() - 1);
+                startInput.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            } else if(preset === 'weekly') {
+                let d = new Date(); d.setDate(d.getDate() - 7);
+                startInput.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            }
+            triggerDeliveryHistorySearch();
+        }
+
+        function triggerDeliveryHistorySearch() {
+            const query = document.getElementById('delivery-search-input').value.toLowerCase().trim();
+            const startDate = document.getElementById('delivery-date-start').value;
+            const preset = document.getElementById('delivery-date-range-preset').value;
+            
+            const wrapper = document.getElementById('delivery-history-dashboard-wrapper');
+            const promptEl = document.getElementById('delivery-history-dormant-prompt');
+            const archiveBox = document.getElementById('delivery-archive-list');
+
+            if(!preset && !startDate && !query) {
+                wrapper.classList.add('hidden');
+                promptEl.classList.remove('hidden');
+                return;
+            }
+            wrapper.classList.remove('hidden');
+            promptEl.classList.add('hidden');
+
+            let filtered = globalOrdersCache.filter(o => o.Status === "Delivered" || o.Status === "Refused");
+            if(startDate) { filtered = filtered.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] === startDate); }
+            if(query) {
+                filtered = filtered.filter(o => o.OrderID.toLowerCase().includes(query) || o.CustomerName.toLowerCase().includes(query) || String(o.Phone).includes(query));
+            }
+
+            let cash = 0; let success = 0;
+            filtered.forEach(o => { if(o.Status === "Delivered") { cash += Number(o.TotalAmount) || 0; success++; } });
+            document.getElementById('rider-history-cash-count').innerText = "₹" + cash;
+            document.getElementById('rider-history-delivery-count').innerText = `${success} Run(s)`;
+
+            if(filtered.length === 0) {
+                archiveBox.innerHTML = `<p class="text-xs text-zinc-400 italic text-center py-6 bg-zinc-50 border border-dashed rounded-xl">No matching records window.</p>`;
+                return;
+            }
+            archiveBox.innerHTML = filtered.map(o => `
+                <div class="bg-white p-4 border rounded-xl text-xs space-y-1 font-medium">
+                    <div class="flex justify-between items-center"><span><strong>${o.OrderID}</strong> • ${o.CustomerName}</span><span class="font-bold uppercase text-[9px] px-2 py-0.5 rounded-md ${o.Status==='Delivered'?'text-emerald-800 bg-emerald-50':'text-rose-700 bg-rose-50'}">${o.Status}</span></div>
+                    <p class="text-[11px] text-zinc-400">📍 Drop: ${o.Address} | Date: ${formatHumanDate(o.DeliveryDate)}</p>
+                    <p class="text-zinc-900 font-bold text-[11px]">Value: ₹${o.TotalAmount}</p>
+                </div>`).join('');
+        }
+
         window.handleAdminDataResponse = function(response) {
             if(!response || !response.success) return;
             globalOrdersCache = response.data || [];
-            buildDashboardAnalyticsWidgets(globalOrdersCache, 'admin-counters-bar');
             runKitchenForecast();
+            
             const pending = globalOrdersCache.filter(o => o.Status === "Ordered");
             const queue = document.getElementById('admin-queue-list');
             if(!queue) return;
@@ -486,7 +623,7 @@
                         </div>`;
                 }).join('');
             }
-            if(adminActiveSubTab === 'history') filterAdminArchiveLedger();
+            if(adminActiveSubTab === 'history') triggerAdminHistoryFilteredSearch();
         };
 
         window.handleHistoryDataResponse = function(response) {
@@ -517,17 +654,36 @@
             }).join('');
         };
 
+        // --- STREAMLINED DAILY RIDER CONTROLLER ENGINE ---
         window.handleDeliveryDataResponse = function(response) {
             if(!response || !response.success) return;
             globalOrdersCache = response.data || [];
-            buildDashboardAnalyticsWidgets(globalOrdersCache, 'delivery-counters-bar');
-            const active = globalOrdersCache.filter(o => o.Status === "Accepted");
-            const historyList = globalOrdersCache.filter(o => o.Status === "Delivered" || o.Status === "Refused");
+            
+            const todayString = getLocalTodayString();
+            
+            // Strictly Filter Today's Tasks
+            const todayPool = globalOrdersCache.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] === todayString);
+            const active = todayPool.filter(o => o.Status === "Accepted");
+            
+            // Build Basic Clean Live Metrics Bar
+            let metrics = { accepted: active.length, delivered: 0, refused: 0, revenue: 0 };
+            todayPool.forEach(o => {
+                if(o.Status === "Delivered") { metrics.delivered++; metrics.revenue += Number(o.TotalAmount) || 0; }
+                if(o.Status === "Refused") { metrics.refused++; }
+            });
+
+            document.getElementById('delivery-live-counters-bar').innerHTML = `
+                <div class="p-2 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl"><p class="text-[9px] uppercase opacity-60">To Deliver</p><p class="text-base font-black mt-0.5">${metrics.accepted}</p></div>
+                <div class="p-2 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl"><p class="text-[9px] uppercase opacity-60">Delivered</p><p class="text-base font-black mt-0.5">${metrics.delivered}</p></div>
+                <div class="p-2 bg-rose-50 text-rose-800 border border-rose-200 rounded-xl"><p class="text-[9px] uppercase opacity-60">Refused</p><p class="text-base font-black mt-0.5">${metrics.refused}</p></div>
+                <div class="p-2 bg-blue-50 text-blue-800 border border-blue-200 rounded-xl"><p class="text-[9px] uppercase opacity-60">Collected</p><p class="text-base font-black mt-0.5">₹${metrics.revenue}</p></div>
+            `;
+
             const list = document.getElementById('delivery-queue-list');
             if(!list) return;
             
             if(active.length === 0) {
-                list.innerHTML = `<p class="text-xs text-zinc-400 text-center py-8 bg-zinc-50 border rounded-2xl border-dashed">No accepted runs ready.</p>`;
+                list.innerHTML = `<p class="text-xs text-zinc-400 text-center py-8 bg-zinc-50 border rounded-2xl border-dashed">No active accepted drops assigned for today.</p>`;
             } else {
                 list.innerHTML = active.map(order => {
                     const cardId = `delivery-card-${order.OrderID}`;
@@ -537,9 +693,8 @@
                             ${generateItemTableHTML(order.ItemsBreakdown)}
                             <div class="bg-zinc-50 p-3 rounded-xl text-zinc-600 space-y-1 text-[11px] font-medium">
                                 <p><strong>Customer:</strong> ${order.CustomerName}</p>
-                                <p><strong>Call Line:</strong> <a href="tel:${order.Phone}" class="text-emerald-800 underline font-bold">${order.Phone}</a></p>
+                                <p><strong>Call:</strong> <a href="tel:${order.Phone}" class="text-emerald-800 underline font-bold">${order.Phone}</a></p>
                                 <p><strong>Address:</strong> ${order.Address}</p>
-                                <p><strong>Date:</strong> ${formatHumanDate(order.DeliveryDate)}</p>
                             </div>
                             <div class="grid grid-cols-2 gap-2 pt-1">
                                 <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Delivered', '${cardId}')" class="bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-sm">✓ Paid & Delivered</button>
@@ -548,20 +703,7 @@
                         </div>`;
                 }).join('');
             }
-            let cash = 0; let success = 0;
-            historyList.forEach(o => { if(o.Status === "Delivered") { cash += Number(o.TotalAmount) || 0; success++; } });
-            document.getElementById('rider-history-cash-count').innerText = "₹" + cash;
-            document.getElementById('rider-history-delivery-count').innerText = `${success} Run(s)`;
-            
-            const archiveEl = document.getElementById('delivery-archive-list');
-            if(archiveEl) {
-                archiveEl.innerHTML = historyList.map(o => `
-                    <div class="bg-white p-4 border rounded-xl text-xs space-y-1 font-medium">
-                        <div class="flex justify-between items-center"><span><strong>${o.OrderID}</strong> • ${o.CustomerName}</span><span class="font-bold uppercase text-[9px] px-2 py-0.5 rounded-md ${o.Status==='Delivered'?'text-emerald-800 bg-emerald-50':'text-rose-700 bg-rose-50'}">${o.Status}</span></div>
-                        <p class="text-[11px] text-zinc-400">📍 Drop: ${o.Address} | Date: ${formatHumanDate(o.DeliveryDate)}</p>
-                        <p class="text-zinc-900 font-bold text-[11px]">Value: ₹${o.TotalAmount}</p>
-                    </div>`).join('');
-            }
+            if(deliveryActiveSubTab === 'history') triggerDeliveryHistorySearch();
         };
 
         function buildDashboardAnalyticsWidgets(orders, containerId) {
@@ -586,7 +728,6 @@
                 if (prompt("Enter Access PIN:") === ADMIN_PIN) { 
                     switchView('admin-view'); 
                     toggleAdminSubTab('live');
-                    loadAdminData(); 
                 } else { 
                     alert("Denied."); 
                     window.location.href = window.location.pathname; 
@@ -595,7 +736,6 @@
                 if (prompt("Enter Rider PIN:") === DELIVERY_PIN) { 
                     switchView('delivery-view'); 
                     toggleDeliverySubTab('live');
-                    loadDeliveryData(); 
                 } else { 
                     alert("Denied."); 
                     window.location.href = window.location.pathname; 
@@ -659,17 +799,15 @@
             if(!urlParams.get('pane')) { switchView('customer-menu'); }
         }
 
-        // --- CORE LIFECYCLE DOM LISTENERS BINDINGS ---
+        // --- LIFECYCLE DOM CONTROLLER INITIALIZATIONS ---
         window.addEventListener('DOMContentLoaded', () => {
             initMenuUIElements(); 
             initDateSelectors();  
             checkUrlParametersForSecureRoutes(); 
             
-            // FIXED: Standard event handler completely eliminates inline form reloads
             const form = document.getElementById('checkout-form');
             if(form) { form.addEventListener('submit', submitOrder); }
 
-            // Restore customer fields from local profiles
             if(userProfile) {
                 if(document.getElementById('user-name') && userProfile.name) document.getElementById('user-name').value = userProfile.name;
                 if(document.getElementById('user-phone') && userProfile.phone) document.getElementById('user-phone').value = userProfile.phone;
@@ -682,13 +820,18 @@
         window.handleInitialLoadCacheResponse = function(response) {
             if(response && response.success) {
                 globalOrdersCache = response.data || [];
+                // Set forecast dropdown default selection value safely to Today's local date calendar string
+                const selectAdmin = document.getElementById('admin-forecast-date');
+                if(selectAdmin) {
+                    selectAdmin.value = getLocalTodayString();
+                }
                 runKitchenForecast();
             }
         };
 
         setInterval(() => {
-            if (currentActivePane === 'admin-view') loadAdminData();
-            else if (currentActivePane === 'delivery-view') loadDeliveryData();
+            if (currentActivePane === 'admin-view' && adminActiveSubTab === 'live') loadAdminData();
+            else if (currentActivePane === 'delivery-view' && deliveryActiveSubTab === 'live') loadDeliveryData();
             else if (currentActivePane === 'customer-history' && userProfile?.phone) requestDatabaseQuery({ action: "getOrders" }, "handleHistoryDataResponse");
         }, 15000);
     </script>

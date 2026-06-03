@@ -6,7 +6,7 @@
     <title>The Cold Press - Gourmet Cold Sandwiches</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght=300..700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght@300..700&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8F7F4; }
         .serif { font-family: 'Playfair Display', serif; }
         .order-card-hide { opacity: 0; transform: scale(0.95); transition: all 0.3s ease-out; }
@@ -137,7 +137,7 @@
         </div>
 
         <div id="admin-subcontainer-history" class="space-y-6 hidden">
-            <div class="bg-white border rounded-2xl p-5 shadow-sm grid grid-cols-1 sm:grid-cols-4 gap-4 items-end text-xs font-bold text-zinc-500">
+            <div class="bg-white border rounded-2xl p-5 shadow-sm grid grid-cols-1 sm:grid-cols-5 gap-4 items-end text-xs font-bold text-zinc-500">
                 <div>
                     <label class="block mb-1 text-[10px] uppercase">Scope Filter Range</label>
                     <select id="admin-date-range-preset" onchange="applyAdminHistoryDatePresets()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
@@ -158,6 +158,17 @@
                     <input type="date" id="admin-date-end" onchange="triggerAdminHistoryFilteredSearch()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
                 </div>
                 <div>
+                    <label class="block mb-1 text-[10px] uppercase">Filter by Status</label>
+                    <select id="admin-status-filter" onchange="triggerAdminHistoryFilteredSearch()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
+                        <option value="">All Statuses</option>
+                        <option value="Accepted">Accepted Prep</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="Rejected">Rejected</option>
+                        <option value="Refused">Refused</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div>
                     <label class="block mb-1 text-[10px] uppercase">Filter Text Search</label>
                     <input type="text" id="admin-search-input" oninput="triggerAdminHistoryFilteredSearch()" placeholder="Search Name, Phone, or ID..." class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none focus:border-emerald-800">
                 </div>
@@ -166,14 +177,14 @@
             <div id="admin-history-dashboard-wrapper" class="space-y-6 hidden">
                 <div class="grid grid-cols-2 md:grid-cols-5 gap-3" id="admin-counters-bar"></div>
                 <div class="bg-emerald-950 text-[#F3EDE4] p-4 rounded-xl flex justify-around text-center text-xs shadow-sm font-bold">
-                    <div><p class="opacity-60 text-[10px] uppercase">Scoped Records Count</p><p class="text-xl font-black mt-0.5" id="history-widget-total-count">0</p></div>
+                    <div><p class="opacity-60 text-[10px] uppercase">Total Records Count</p><p class="text-xl font-black mt-0.5" id="history-widget-total-count">0</p></div>
                     <div class="border-l border-emerald-900"></div>
-                    <div><p class="opacity-60 text-[10px] uppercase">Scoped Successful Revenue</p><p class="text-xl font-black mt-0.5 text-amber-400" id="history-widget-total-value">₹0</p></div>
+                    <div><p class="opacity-60 text-[10px] uppercase">Total Scoped Revenue</p><p class="text-xl font-black mt-0.5 text-amber-400" id="history-widget-total-value">₹0</p></div>
                 </div>
                 <div id="admin-archive-list" class="space-y-3"></div>
             </div>
             <div id="admin-history-dormant-prompt" class="py-12 bg-zinc-50 border border-dashed rounded-2xl text-center text-xs text-zinc-400 font-medium">
-                ⚠️ Select a scope filter range or enter look-up text values to populate logs dashboard.
+                ⚠️ Select a filter preset or use text parameters to reveal the history metrics dashboard.
             </div>
         </div>
     </section>
@@ -190,7 +201,7 @@
         </div>
 
         <div id="delivery-subcontainer-history" class="space-y-4 hidden">
-            <div class="bg-white border rounded-2xl p-4 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-3 items-end text-xs font-bold text-zinc-500">
+            <div class="bg-white border rounded-2xl p-4 shadow-sm grid grid-cols-1 md:grid-cols-5 gap-3 items-end text-xs font-bold text-zinc-500">
                 <div>
                     <label class="block mb-1 text-[10px] uppercase">Select Window</label>
                     <select id="delivery-date-range-preset" onchange="applyDeliveryHistoryPresets()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
@@ -202,9 +213,23 @@
                     </select>
                 </div>
                 <div>
+                    <label class="block mb-1 text-[10px] uppercase">Start Date</label>
                     <input type="date" id="delivery-date-start" onchange="triggerDeliveryHistorySearch()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
                 </div>
                 <div>
+                    <label class="block mb-1 text-[10px] uppercase">End Date</label>
+                    <input type="date" id="delivery-date-end" onchange="triggerDeliveryHistorySearch()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block mb-1 text-[10px] uppercase">Filter Status</label>
+                    <select id="delivery-status-filter" onchange="triggerDeliveryHistorySearch()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
+                        <option value="">All Statuses</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="Refused">Refused</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-1 text-[10px] uppercase">Search Keyword</label>
                     <input type="text" id="delivery-search-input" oninput="triggerDeliveryHistorySearch()" placeholder="Search Name, Phone, or ID..." class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none focus:border-emerald-800">
                 </div>
             </div>
@@ -217,7 +242,7 @@
                 <div id="delivery-archive-list" class="space-y-2"></div>
             </div>
             <div id="delivery-history-dormant-prompt" class="py-12 bg-zinc-50 border border-dashed rounded-2xl text-center text-xs text-zinc-400 font-medium">
-                ⚠️ Specify ledger presets or enter target keywords to populate history logs.
+                ⚠️ Select filter parameters to generate your rider history analysis matrix.
             </div>
         </div>
     </section>
@@ -253,6 +278,7 @@
                 document.getElementById('admin-date-range-preset').value = "";
                 document.getElementById('admin-date-start').value = "";
                 document.getElementById('admin-date-end').value = "";
+                document.getElementById('admin-status-filter').value = "";
                 document.getElementById('admin-search-input').value = "";
                 document.getElementById('admin-history-dashboard-wrapper').classList.add('hidden');
                 document.getElementById('admin-history-dormant-prompt').classList.remove('hidden');
@@ -271,6 +297,8 @@
             } else {
                 document.getElementById('delivery-date-range-preset').value = "";
                 document.getElementById('delivery-date-start').value = "";
+                document.getElementById('delivery-date-end').value = "";
+                document.getElementById('delivery-status-filter').value = "";
                 document.getElementById('delivery-search-input').value = "";
                 document.getElementById('delivery-history-dashboard-wrapper').classList.add('hidden');
                 document.getElementById('delivery-history-dormant-prompt').classList.remove('hidden');
@@ -285,6 +313,7 @@
             return `<span class="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-md font-bold text-[10px] uppercase">✅ Verified (${countOrders} Orders)</span>`;
         }
 
+        // --- DOTTED LINE LAYOUT ALIGNMENTS ---
         function generateItemTableHTML(itemsMap) {
             if(!itemsMap || Object.keys(itemsMap).length === 0) return `<p class="text-zinc-400 italic text-[11px]">No items payload.</p>`;
             return `<div class="space-y-1 bg-zinc-50 border border-zinc-100 p-3 rounded-xl font-medium my-2">` + 
@@ -340,12 +369,10 @@
                 </div>`).join('');
         }
 
-        // --- TIMEZONE-SAFE LOCAL DATE DROPDOWNS GENERATORS ---
         function initDateSelectors() {
             const selectCheckout = document.getElementById('delivery-date-select');
             const selectAdmin = document.getElementById('admin-forecast-date');
             
-            // Checkout Dropdown: Next 3 Days strictly from Tomorrow
             let checkoutOptionsHtml = `<option value="">-- Choose Mandatory Delivery Date --</option>`;
             for(let i=1; i<=3; i++) {
                 let d = new Date(); d.setDate(d.getDate() + i);
@@ -355,7 +382,6 @@
             }
             if(selectCheckout) selectCheckout.innerHTML = checkoutOptionsHtml;
             
-            // Admin Forecast Dropdown: Includes TODAY as baseline default
             let adminOptionsHtml = "";
             for(let i=0; i<=3; i++) {
                 let d = new Date(); d.setDate(d.getDate() + i);
@@ -449,6 +475,7 @@
             if(cachedOrder) {
                 cachedOrder.Status = status; 
                 runKitchenForecast();
+                if(currentActivePane === 'admin-view') buildDashboardAnalyticsWidgets(globalOrdersCache, 'admin-counters-bar');
             }
             requestDatabaseQuery({ action: "updateStatus", orderId: orderId, status: status }, "handleStatusMutationResponse");
         }
@@ -458,7 +485,6 @@
             if(currentActivePane === 'delivery-view') loadDeliveryData();
         };
 
-        // --- SEARCH INTEL ENGINE & SCOPED ANALYTICS CONSTRUCTORS ---
         function applyAdminHistoryDatePresets() {
             const preset = document.getElementById('admin-date-range-preset').value;
             const startInput = document.getElementById('admin-date-start');
@@ -485,25 +511,25 @@
             const query = document.getElementById('admin-search-input').value.toLowerCase().trim();
             const startDate = document.getElementById('admin-date-start').value;
             const endDate = document.getElementById('admin-date-end').value;
+            const statusFilter = document.getElementById('admin-status-filter').value;
             const preset = document.getElementById('admin-date-range-preset').value;
             
             const wrapper = document.getElementById('admin-history-dashboard-wrapper');
             const promptEl = document.getElementById('admin-history-dormant-prompt');
             const archiveBox = document.getElementById('admin-archive-list');
 
-            // Rule: Keep blank/dormant until a lookup parameter is touched
-            if(!preset && !startDate && !endDate && !query) {
+            if(!preset && !startDate && !endDate && !query && !statusFilter) {
                 wrapper.classList.add('hidden');
                 promptEl.classList.remove('hidden');
                 return;
             }
-
             wrapper.classList.remove('hidden');
             promptEl.classList.add('hidden');
 
             let filtered = globalOrdersCache.filter(o => o.Status !== "Ordered");
             if(startDate) { filtered = filtered.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] >= startDate); }
             if(endDate) { filtered = filtered.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] <= endDate); }
+            if(statusFilter) { filtered = filtered.filter(o => o.Status === statusFilter); }
             if(query) {
                 filtered = filtered.filter(o => o.OrderID.toLowerCase().includes(query) || o.CustomerName.toLowerCase().includes(query) || String(o.Phone).includes(query));
             }
@@ -515,7 +541,7 @@
             document.getElementById('history-widget-total-value').innerText = "₹" + totalVolumeValue;
 
             if(filtered.length === 0) {
-                archiveBox.innerHTML = `<p class="text-xs text-zinc-400 italic text-center py-6 bg-zinc-50 border border-dashed rounded-xl">No historical logs match parameters.</p>`;
+                archiveBox.innerHTML = `<p class="text-xs text-zinc-400 italic text-center py-6 bg-zinc-50 border border-dashed rounded-xl">No historical records match parameters.</p>`;
                 return;
             }
             archiveBox.innerHTML = filtered.map(order => {
@@ -534,18 +560,23 @@
             }).join('');
         }
 
+        // --- DYNAMIC SELECTION RANGE PRESETS RIDER ENGINE ---
         function applyDeliveryHistoryPresets() {
             const preset = document.getElementById('delivery-date-range-preset').value;
             const startInput = document.getElementById('delivery-date-start');
+            const endInput = document.getElementById('delivery-date-end');
             const todayStr = getLocalTodayString();
             if(!preset) return;
-            if(preset === 'all') { startInput.value = ''; }
+            
+            if(preset === 'all') { startInput.value = ''; endInput.value = ''; }
             else if(preset === 'yesterday') {
                 let d = new Date(); d.setDate(d.getDate() - 1);
-                startInput.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                let yestStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                startInput.value = yestStr; endInput.value = yestStr;
             } else if(preset === 'weekly') {
                 let d = new Date(); d.setDate(d.getDate() - 7);
                 startInput.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                endInput.value = todayStr;
             }
             triggerDeliveryHistorySearch();
         }
@@ -553,13 +584,15 @@
         function triggerDeliveryHistorySearch() {
             const query = document.getElementById('delivery-search-input').value.toLowerCase().trim();
             const startDate = document.getElementById('delivery-date-start').value;
+            const endDate = document.getElementById('delivery-date-end').value;
+            const statusFilter = document.getElementById('delivery-status-filter').value;
             const preset = document.getElementById('delivery-date-range-preset').value;
             
             const wrapper = document.getElementById('delivery-history-dashboard-wrapper');
             const promptEl = document.getElementById('delivery-history-dormant-prompt');
             const archiveBox = document.getElementById('delivery-archive-list');
 
-            if(!preset && !startDate && !query) {
+            if(!preset && !startDate && !endDate && !query && !statusFilter) {
                 wrapper.classList.add('hidden');
                 promptEl.classList.remove('hidden');
                 return;
@@ -568,7 +601,9 @@
             promptEl.classList.add('hidden');
 
             let filtered = globalOrdersCache.filter(o => o.Status === "Delivered" || o.Status === "Refused");
-            if(startDate) { filtered = filtered.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] === startDate); }
+            if(startDate) { filtered = filtered.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] >= startDate); }
+            if(endDate) { filtered = filtered.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] <= endDate); }
+            if(statusFilter) { filtered = filtered.filter(o => o.Status === statusFilter); }
             if(query) {
                 filtered = filtered.filter(o => o.OrderID.toLowerCase().includes(query) || o.CustomerName.toLowerCase().includes(query) || String(o.Phone).includes(query));
             }
@@ -654,18 +689,14 @@
             }).join('');
         };
 
-        // --- STREAMLINED DAILY RIDER CONTROLLER ENGINE ---
         window.handleDeliveryDataResponse = function(response) {
             if(!response || !response.success) return;
             globalOrdersCache = response.data || [];
             
             const todayString = getLocalTodayString();
-            
-            // Strictly Filter Today's Tasks
             const todayPool = globalOrdersCache.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] === todayString);
             const active = todayPool.filter(o => o.Status === "Accepted");
             
-            // Build Basic Clean Live Metrics Bar
             let metrics = { accepted: active.length, delivered: 0, refused: 0, revenue: 0 };
             todayPool.forEach(o => {
                 if(o.Status === "Delivered") { metrics.delivered++; metrics.revenue += Number(o.TotalAmount) || 0; }
@@ -693,7 +724,7 @@
                             ${generateItemTableHTML(order.ItemsBreakdown)}
                             <div class="bg-zinc-50 p-3 rounded-xl text-zinc-600 space-y-1 text-[11px] font-medium">
                                 <p><strong>Customer:</strong> ${order.CustomerName}</p>
-                                <p><strong>Call:</strong> <a href="tel:${order.Phone}" class="text-emerald-800 underline font-bold">${order.Phone}</a></p>
+                                <p><strong>Call Line:</strong> <a href="tel:${order.Phone}" class="text-emerald-800 underline font-bold">${order.Phone}</a></p>
                                 <p><strong>Address:</strong> ${order.Address}</p>
                             </div>
                             <div class="grid grid-cols-2 gap-2 pt-1">
@@ -762,6 +793,7 @@
         function loadAdminData() { requestDatabaseQuery({ action: "getOrders" }, "handleAdminDataResponse"); }
         function loadDeliveryData() { requestDatabaseQuery({ action: "getOrders" }, "handleDeliveryDataResponse"); }
 
+        // --- FIXED: strict production checking conditions logic applied loops ---
         function runKitchenForecast() {
             const targetDate = document.getElementById('admin-forecast-date').value;
             const summaryBox = document.getElementById('kitchen-summary-box');
@@ -770,7 +802,8 @@
             let totals = { "Spinach N Corn Sandwich": 0, "Veg Coleslaw Sandwich": 0, "Veg Green salad sandwich": 0, "Chicken Salami Sandwich": 0, "Chicken Sandwich": 0 };
             globalOrdersCache.forEach(order => {
                 if(!order.DeliveryDate) return;
-                if(order.DeliveryDate.split('T')[0] === targetDate && (order.Status === "Ordered" || order.Status === "Accepted")) {
+                // STRICTOR CONDITION CHECK applied right here
+                if(order.DeliveryDate.split('T')[0] === targetDate && (order.Status === "Accepted")) {
                     for(let name in order.ItemsBreakdown) { if(totals.hasOwnProperty(name)) totals[name] += Number(order.ItemsBreakdown[name]); }
                 }
             });
@@ -799,7 +832,6 @@
             if(!urlParams.get('pane')) { switchView('customer-menu'); }
         }
 
-        // --- LIFECYCLE DOM CONTROLLER INITIALIZATIONS ---
         window.addEventListener('DOMContentLoaded', () => {
             initMenuUIElements(); 
             initDateSelectors();  
@@ -820,11 +852,8 @@
         window.handleInitialLoadCacheResponse = function(response) {
             if(response && response.success) {
                 globalOrdersCache = response.data || [];
-                // Set forecast dropdown default selection value safely to Today's local date calendar string
                 const selectAdmin = document.getElementById('admin-forecast-date');
-                if(selectAdmin) {
-                    selectAdmin.value = getLocalTodayString();
-                }
+                if(selectAdmin) { selectAdmin.value = getLocalTodayString(); }
                 runKitchenForecast();
             }
         };

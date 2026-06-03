@@ -31,11 +31,13 @@
         let cart = {};
         let userProfile = JSON.parse(localStorage.getItem('sandwich_user_v3')) || null;
         let globalOrdersCache = [];
+        let localStatusMutations = {}; // FIXED: Mutation state locker to block background race conditions
         let currentActivePane = 'customer-menu';
         let adminActiveSubTab = 'live'; 
         let deliveryActiveSubTab = 'live'; 
     </script>
 
+    <!-- NAVBAR -->
     <nav class="bg-[#052219] text-[#F3EDE4] px-6 py-4 sticky top-0 z-50 shadow-sm flex justify-between items-center border-b border-emerald-950/40">
         <div onclick="returnToMainStorefront()" class="cursor-pointer">
             <h1 class="serif text-xl md:text-2xl font-bold tracking-wide" id="nav-main-title">The Cold Press</h1>
@@ -47,6 +49,7 @@
         </div>
     </nav>
 
+    <!-- CUSTOMER VIEW: MENU STOREFRONT -->
     <section id="customer-menu" class="app-view max-w-lg mx-auto p-4 pb-32">
         <div class="my-8 text-center px-4">
             <h2 class="serif text-3xl md:text-4xl font-semibold text-[#052219] tracking-tight">Today's Fresh Prep</h2>
@@ -66,6 +69,7 @@
         </div>
     </section>
 
+    <!-- CUSTOMER VIEW: CHECKOUT -->
     <section id="checkout-step" class="app-view max-w-md mx-auto p-4 hidden">
         <div class="mb-6">
             <button onclick="switchView('customer-menu')" class="text-xs text-emerald-800 font-bold tracking-wide flex items-center gap-1">← Modify Selected Items</button>
@@ -104,6 +108,7 @@
         </form>
     </section>
 
+    <!-- CUSTOMER DASHBOARD & HISTORY -->
     <section id="customer-history" class="app-view max-w-md mx-auto p-4 hidden">
         <h2 class="serif text-2xl font-bold text-[#052219] my-5">Your Booking Dashboard</h2>
         <div id="history-login-warning" class="bg-amber-50 text-amber-900 border border-amber-200 p-4 rounded-2xl text-xs hidden mb-4">
@@ -116,12 +121,14 @@
         <div id="orders-history-list" class="space-y-4"></div>
     </section>
 
+    <!-- ADMIN PANEL VIEW -->
     <section id="admin-view" class="app-view max-w-6xl mx-auto p-6 hidden">
         <div class="flex gap-2 border-b border-zinc-200 pb-px mb-6 font-semibold text-xs tracking-wide uppercase">
             <button id="admin-tab-btn-live" onclick="toggleAdminSubTab('live')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">🍳 Live Kitchen Track</button>
             <button id="admin-tab-btn-history" onclick="toggleAdminSubTab('history')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">📊 Dashboard & History Search</button>
         </div>
 
+        <!-- SUB-TAB 1: LIVE MONITOR -->
         <div id="admin-subcontainer-live" class="space-y-6 hidden">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2 space-y-4">
@@ -136,6 +143,7 @@
             </div>
         </div>
 
+        <!-- SUB-TAB 2: HISTORICAL RECORDS SEARCH -->
         <div id="admin-subcontainer-history" class="space-y-6 hidden">
             <div class="bg-white border rounded-2xl p-5 shadow-sm grid grid-cols-1 sm:grid-cols-5 gap-4 items-end text-xs font-bold text-zinc-500">
                 <div>
@@ -189,17 +197,20 @@
         </div>
     </section>
 
+    <!-- RIDER DISPATCH VIEW -->
     <section id="delivery-view" class="app-view max-w-2xl mx-auto p-4 hidden">
         <div class="flex gap-2 border-b border-zinc-200 pb-px mb-4 font-semibold text-xs uppercase">
             <button id="delivery-tab-btn-live" onclick="toggleDeliverySubTab('live')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">📦 Today's Active Run</button>
             <button id="delivery-tab-btn-history" onclick="toggleDeliverySubTab('history')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">🗄️ Rider Ledger Dashboard</button>
         </div>
 
+        <!-- SUB-TAB 1: TODAY'S LIVE RUNS ONLY -->
         <div id="delivery-subcontainer-live" class="space-y-4 hidden">
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs font-bold" id="delivery-live-counters-bar"></div>
             <div id="delivery-queue-list" class="space-y-3"></div>
         </div>
 
+        <!-- SUB-TAB 2: LIFETIME RIDER ARCHIVE -->
         <div id="delivery-subcontainer-history" class="space-y-4 hidden">
             <div class="bg-white border rounded-2xl p-4 shadow-sm grid grid-cols-1 md:grid-cols-5 gap-3 items-end text-xs font-bold text-zinc-500">
                 <div>
@@ -247,6 +258,7 @@
         </div>
     </section>
 
+    <!-- MASTER SYSTEM LOGIC ENGINE -->
     <script>
         function getLocalTodayString() {
             const d = new Date();
@@ -254,6 +266,17 @@
             const month = String(d.getMonth() + 1).padStart(2, '0');
             const day = String(d.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
+        }
+
+        // FIXED: Sanitizes server records to enforce local mutations and prevent ghost card flicker
+        function syncOrdersCache(serverData) {
+            if (!serverData) return [];
+            return serverData.map(order => {
+                if (localStatusMutations[order.OrderID]) {
+                    order.Status = localStatusMutations[order.OrderID];
+                }
+                return order;
+            });
         }
 
         function switchView(viewId) {
@@ -313,7 +336,6 @@
             return `<span class="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-md font-bold text-[10px] uppercase">✅ Verified (${countOrders} Orders)</span>`;
         }
 
-        // --- DOTTED LINE LAYOUT ALIGNMENTS ---
         function generateItemTableHTML(itemsMap) {
             if(!itemsMap || Object.keys(itemsMap).length === 0) return `<p class="text-zinc-400 italic text-[11px]">No items payload.</p>`;
             return `<div class="space-y-1 bg-zinc-50 border border-zinc-100 p-3 rounded-xl font-medium my-2">` + 
@@ -465,12 +487,17 @@
             }
         };
 
+        // FIXED: Enforce state locks on changes to ensure instantaneous re-forecasts without background rollback
         function executeOptimisticStatusChange(orderId, status, cardDomId) {
             const targetCard = document.getElementById(cardDomId);
             if(targetCard) {
                 targetCard.classList.add('order-card-hide');
                 setTimeout(() => targetCard.remove(), 300);
             }
+            
+            // Lock state locally to protect cache allocations against server updates in flight
+            localStatusMutations[orderId] = status;
+            
             let cachedOrder = globalOrdersCache.find(o => o.OrderID === orderId);
             if(cachedOrder) {
                 cachedOrder.Status = status; 
@@ -560,7 +587,6 @@
             }).join('');
         }
 
-        // --- DYNAMIC SELECTION RANGE PRESETS RIDER ENGINE ---
         function applyDeliveryHistoryPresets() {
             const preset = document.getElementById('delivery-date-range-preset').value;
             const startInput = document.getElementById('delivery-date-start');
@@ -627,7 +653,7 @@
 
         window.handleAdminDataResponse = function(response) {
             if(!response || !response.success) return;
-            globalOrdersCache = response.data || [];
+            globalOrdersCache = syncOrdersCache(response.data); // Sanitized update
             runKitchenForecast();
             
             const pending = globalOrdersCache.filter(o => o.Status === "Ordered");
@@ -664,7 +690,7 @@
         window.handleHistoryDataResponse = function(response) {
             const container = document.getElementById('orders-history-list');
             if(!container || !response || !response.success) return;
-            globalOrdersCache = response.data || [];
+            globalOrdersCache = syncOrdersCache(response.data); // Sanitized update
             const phone = userProfile ? userProfile.phone : '';
             const filtered = globalOrdersCache.filter(order => String(order.Phone) === String(phone));
             if(filtered.length === 0) { container.innerHTML = `<p class="text-xs text-zinc-400 text-center py-6">No matching logs found.</p>`; return; }
@@ -691,7 +717,7 @@
 
         window.handleDeliveryDataResponse = function(response) {
             if(!response || !response.success) return;
-            globalOrdersCache = response.data || [];
+            globalOrdersCache = syncOrdersCache(response.data); // Sanitized update
             
             const todayString = getLocalTodayString();
             const todayPool = globalOrdersCache.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] === todayString);
@@ -793,7 +819,6 @@
         function loadAdminData() { requestDatabaseQuery({ action: "getOrders" }, "handleAdminDataResponse"); }
         function loadDeliveryData() { requestDatabaseQuery({ action: "getOrders" }, "handleDeliveryDataResponse"); }
 
-        // --- FIXED: strict production checking conditions logic applied loops ---
         function runKitchenForecast() {
             const targetDate = document.getElementById('admin-forecast-date').value;
             const summaryBox = document.getElementById('kitchen-summary-box');
@@ -802,7 +827,7 @@
             let totals = { "Spinach N Corn Sandwich": 0, "Veg Coleslaw Sandwich": 0, "Veg Green salad sandwich": 0, "Chicken Salami Sandwich": 0, "Chicken Sandwich": 0 };
             globalOrdersCache.forEach(order => {
                 if(!order.DeliveryDate) return;
-                // STRICTOR CONDITION CHECK applied right here
+                // Forecast increments strictly after acceptance status matches
                 if(order.DeliveryDate.split('T')[0] === targetDate && (order.Status === "Accepted")) {
                     for(let name in order.ItemsBreakdown) { if(totals.hasOwnProperty(name)) totals[name] += Number(order.ItemsBreakdown[name]); }
                 }
@@ -851,7 +876,7 @@
 
         window.handleInitialLoadCacheResponse = function(response) {
             if(response && response.success) {
-                globalOrdersCache = response.data || [];
+                globalOrdersCache = syncOrdersCache(response.data);
                 const selectAdmin = document.getElementById('admin-forecast-date');
                 if(selectAdmin) { selectAdmin.value = getLocalTodayString(); }
                 runKitchenForecast();

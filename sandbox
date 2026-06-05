@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Cold Press - Gourmet Cold Sandwiches</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght@300..700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8F7F4; }
+        .serif { font-family: 'Playfair Display', serif; }
+        .order-card-hide { opacity: 0; transform: scale(0.95); transition: all 0.3s ease-out; }
+    </style>
+</head>
+<body class="text-zinc-800 selection:bg-emerald-100">
+
+    <!-- GLOBAL TOAST ELEMENT NOTIFICATION LAYER CONTAINER -->
+    <div id="toast-container" class="fixed top-5 right-5 z-100 space-y-3 max-w-sm w-full pointer-events-none"></div>
+
+    <script>
+        // --- CONFIGURATION SETUP ---
+        // Replace this exact link line with your updated Apps Script Exec deployment transport token URL string
+        const API_URL = "https://script.google.com/macros/s/AKfycbx51CH2GPgrZsrhZopI6FN23xG6Yvl5_ATSRQIhN0Dm9vhwdCX1mcCDnhldj93EPHkM/exec"; 
+
+        const MENU = [
+            { id: "item_1", name: "Spinach N Corn Sandwich", price: 110, desc: "Creamy blanched baby spinach and sweet kernel corn tossed lightly in house white sauce.", icon: "🥬" },
+            { id: "item_2", name: "Veg Coleslaw Sandwich", price: 80, desc: "Crisp shredded garden greens & summer cabbage crunch folded in premium light dressing.", icon: "🥗" },
+            { id: "item_3", name: "Veg Green salad sandwich", price: 100, desc: "Slices of premium English cucumber, vine tomatoes, and fresh mint herbal spread.", icon: "🥒" },
+            { id: "item_4", name: "Chicken Salami Sandwich", price: 120, desc: "Delicately smoked chicken salami layered over artisanal cold spread cheese lines.", icon: "🍗" },
+            { id: "item_5", name: "Chicken Sandwich", price: 120, desc: "Shredded slow-cooked chicken breast infused with white pepper and premium mayo cream.", icon: "🥪" }
+        ];
+
+        let cart = {};
+        let userProfile = JSON.parse(localStorage.getItem('sandwich_user_v3')) || null;
+        let globalOrdersCache = [];
+        let localStatusMutations = {}; 
+        let verifiedSessionPin = ""; // Server verified session token allocation cache tracking parameter
+        let currentActivePane = 'customer-menu';
+        let adminActiveSubTab = 'live'; 
+        let deliveryActiveSubTab = 'live'; 
+
+        // OPTION 2 IMPLEMENTATION: BRAND NEW NON-BLOCKING VISUAL TOAST MANAGER ENGINE
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `p-4 rounded-xl shadow-lg border text-xs font-bold transition-all duration-300 transform translate-x-10 opacity-0 pointer-events-auto flex items-center gap-2 text-white ` +
+                (type === 'success' ? 'bg-emerald-900 border-emerald-700' : (type === 'error' ? 'bg-rose-900 border-rose-700' : 'bg-amber-950 border-amber-700'));
+            
+            const icon = type === 'success' ? '✅' : (type === 'error' ? '❌' : '⚠️');
+            toast.innerHTML = `<span>${icon}</span><p class="flex-1">${message}</p>`;
+            container.appendChild(toast);
+            
+            setTimeout(() => { toast.classList.remove('translate-x-10', 'opacity-0'); }, 10);
+            setTimeout(() => {
+                toast.classList.add('translate-x-10', 'opacity-0');
+                setTimeout(() => { toast.remove(); }, 300);
+            }, 4000);
+        }
+    </script>
+
+    <!-- NAVBAR -->
+    <nav class="bg-[#052219] text-[#F3EDE4] px-6 py-4 sticky top-0 z-50 shadow-sm flex justify-between items-center border-b border-emerald-950/40">
+        <div onclick="returnToMainStorefront()" class="cursor-pointer">
+            <h1 class="serif text-xl md:text-2xl font-bold tracking-wide" id="nav-main-title">The Cold Press</h1>
+            <p class="text-[9px] uppercase tracking-widest text-amber-400 font-medium -mt-1" id="nav-subtitle">Crafted Cold Delicatessen</p>
+        </div>
+        <div class="flex gap-5 text-xs tracking-wider uppercase font-medium" id="nav-links-container">
+            <button onclick="switchView('customer-menu')" class="hover:text-amber-300 transition">Menu</button>
+            <button onclick="openHistory()" class="hover:text-amber-300 transition">My Dashboard</button>
+        </div>
+    </nav>
+
+    <!-- CUSTOMER VIEW: MENU STOREFRONT -->
+    <section id="customer-menu" class="app-view max-w-lg mx-auto p-4 pb-32">
+        <div class="my-8 text-center px-4">
+            <h2 class="serif text-3xl md:text-4xl font-semibold text-[#052219] tracking-tight">Today's Fresh Prep</h2>
+            <p class="text-xs text-zinc-500 mt-2 max-w-xs mx-auto leading-relaxed">Artisanal, nutrient-dense cold layers prepared daily. Pre-order for the next 3 days.</p>
+        </div>
+        <div class="space-y-4" id="menu-container"></div>
+        <div id="cart-sticky" class="fixed bottom-4 left-4 right-4 max-w-md mx-auto bg-[#052219] text-white p-4 rounded-2xl shadow-xl hidden z-40 transform transition-all duration-300">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p id="cart-summary-text" class="text-sm font-semibold tracking-wide text-[#F3EDE4]">0 Items • ₹0</p>
+                    <p class="text-[10px] text-zinc-400">Excludes delivery taxes</p>
+                </div>
+                <button onclick="switchView('checkout-step')" class="bg-amber-400 hover:bg-amber-500 text-zinc-950 text-xs uppercase tracking-wider font-bold px-5 py-2.5 rounded-xl shadow-md transition-all">
+                    Checkout Details →
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- CUSTOMER VIEW: CHECKOUT -->
+    <section id="checkout-step" class="app-view max-w-md mx-auto p-4 hidden">
+        <div class="mb-6">
+            <button onclick="switchView('customer-menu')" class="text-xs text-emerald-800 font-bold tracking-wide flex items-center gap-1">← Modify Selected Items</button>
+            <h2 class="serif text-2xl font-bold text-[#052219] mt-2">Logistics Routing</h2>
+        </div>
+        <form id="checkout-form" class="bg-white p-6 rounded-3xl border border-zinc-200/60 shadow-sm space-y-5">
+            <div class="space-y-4">
+                <label class="block text-[11px] uppercase tracking-wider font-bold text-zinc-400">1. Delivery Destination Profile</label>
+                <div>
+                    <input type="text" id="user-name" placeholder="Recipient's Name" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-3 text-sm focus:outline-none focus:border-emerald-800">
+                </div>
+                <div>
+                    <input type="tel" id="user-phone" placeholder="10-Digit Mobile Number" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-3 text-sm focus:outline-none focus:border-emerald-800">
+                </div>
+                <div>
+                    <textarea id="user-address" rows="3" placeholder="Full Dropoff Address Details" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-3 text-sm focus:outline-none focus:border-emerald-800"></textarea>
+                </div>
+            </div>
+            <div class="bg-amber-50 border-2 border-amber-400 p-4 rounded-2xl space-y-1.5">
+                <label class="block text-xs uppercase tracking-wider font-black text-amber-950 flex items-center gap-1">
+                    📅 2. Select Mandatory Delivery Date
+                </label>
+                <select id="delivery-date-select" class="w-full bg-white border border-amber-300 rounded-xl p-3 text-sm font-bold text-amber-950 focus:outline-none focus:ring-2 focus:ring-emerald-800"></select>
+            </div>
+            <div class="border-t border-zinc-100 pt-4 bg-zinc-50/50 p-4 rounded-xl">
+                <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Item Summary</p>
+                <div id="checkout-items-list" class="space-y-2 text-xs font-medium text-zinc-700"></div>
+                <div class="flex justify-between font-bold text-base text-zinc-900 mt-3 pt-3 border-t border-dashed border-zinc-200">
+                    <span>Cash on Delivery Due</span>
+                    <span id="checkout-total-amt" class="text-[#052219]">₹0</span>
+                </div>
+            </div>
+            <button type="submit" id="btn-submit-order" class="w-full bg-[#052219] hover:bg-emerald-950 text-white font-bold p-3.5 rounded-xl transition shadow-md flex justify-center items-center cursor-pointer">
+                Confirm Pre-Order
+            </button>
+        </form>
+    </section>
+
+    <!-- CUSTOMER DASHBOARD & HISTORY -->
+    <section id="customer-history" class="app-view max-w-md mx-auto p-4 hidden">
+        <h2 class="serif text-2xl font-bold text-[#052219] my-5">Your Booking Dashboard</h2>
+        <div id="history-login-warning" class="bg-amber-50 text-amber-900 border border-amber-200 p-4 rounded-2xl text-xs hidden mb-4">
+            Verify account records. Input phone number line:
+            <div class="flex gap-2 mt-2">
+                <input type="tel" id="history-phone-input" placeholder="10 digit number" class="bg-white p-2 border border-amber-300 rounded-lg text-xs w-full">
+                <button onclick="reloadHistoryFromInput()" class="bg-[#052219] text-white px-4 py-2 rounded-lg text-xs font-bold">Fetch Data</button>
+            </div>
+        </div>
+        <div id="orders-history-list" class="space-y-4"></div>
+    </section>
+
+    <!-- ADMIN PANEL VIEW -->
+    <section id="admin-view" class="app-view max-w-6xl mx-auto p-6 hidden">
+        <div class="flex gap-2 border-b border-zinc-200 pb-px mb-6 font-semibold text-xs tracking-wide uppercase">
+            <button id="admin-tab-btn-live" onclick="toggleAdminSubTab('live')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">🍳 Live Kitchen Track</button>
+            <button id="admin-tab-btn-history" onclick="toggleAdminSubTab('history')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">📊 Dashboard & History Search</button>
+        </div>
+
+        <!-- SUB-TAB 1: LIVE MONITOR -->
+        <div id="admin-subcontainer-live" class="space-y-6 hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 space-y-4">
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-zinc-400">📥 Live Incoming Streams (Unprocessed Only)</h3>
+                    <div id="admin-queue-list" class="space-y-3"></div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm space-y-4 h-fit">
+                    <h3 class="text-sm font-bold text-[#052219]">🍳 Kitchen Production Forecast</h3>
+                    <select id="admin-forecast-date" onchange="runKitchenForecast()" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl p-2.5 text-xs font-bold text-zinc-700 focus:outline-none"></select>
+                    <div class="border-t border-zinc-100 pt-2 space-y-2" id="kitchen-summary-box"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SUB-TAB 2: HISTORICAL RECORDS -->
+        <div id="admin-subcontainer-history" class="space-y-6 hidden">
+            <div class="bg-white border rounded-2xl p-5 shadow-sm grid grid-cols-1 sm:grid-cols-5 gap-4 items-end text-xs font-bold text-zinc-500">
+                <div>
+                    <label class="block mb-1 text-[10px] uppercase">Scope Filter Range</label>
+                    <select id="admin-date-range-preset" onchange="applyAdminHistoryDatePresets()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
+                        <option value="">-- Choose Timeline --</option>
+                        <option value="all">All Lifetime Data</option>
+                        <option value="today">Today's Pool</option>
+                        <option value="weekly">Past 7 Days (Weekly)</option>
+                        <option value="monthly">Past 30 Days (Monthly)</option>
+                        <option value="custom">Custom Specified Window</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-1 text-[10px] uppercase">Start Date</label>
+                    <input type="date" id="admin-date-start" onchange="triggerAdminHistoryFilteredSearch()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block mb-1 text-[10px] uppercase">End Date</label>
+                    <input type="date" id="admin-date-end" onchange="triggerAdminHistoryFilteredSearch()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block mb-1 text-[10px] uppercase">Filter by Status</label>
+                    <select id="admin-status-filter" onchange="triggerAdminHistoryFilteredSearch()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
+                        <option value="">All Statuses</option>
+                        <option value="Accepted">Accepted Prep</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="Rejected">Rejected</option>
+                        <option value="Refused">Refused</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-1 text-[10px] uppercase">Filter Text Search</label>
+                    <input type="text" id="admin-search-input" oninput="triggerAdminHistoryFilteredSearch()" placeholder="Search Name, Phone, or ID..." class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none focus:border-emerald-800">
+                </div>
+            </div>
+            
+            <!-- OPTION 3 IMPLEMENTATION: INTEGRATED MASTER REVENUE & PRODUCTION SUMMARY OVERVIEW PANEL -->
+            <div id="admin-history-dashboard-wrapper" class="space-y-6 hidden">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="admin-financial-charts-grid">
+                    <!-- Left Block: Revenue Segment Splits -->
+                    <div class="bg-[#052219] text-[#F3EDE4] p-5 rounded-2xl shadow-sm space-y-4 md:col-span-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-[10px] font-bold tracking-widest text-amber-400 uppercase">💰 Timeline Financial Ledger</h4>
+                            <p class="text-[11px] text-zinc-300 mt-1">Calculations computed for matching filter limits.</p>
+                        </div>
+                        <div class="space-y-2 border-t border-emerald-900/60 pt-3">
+                            <div class="flex justify-between items-baseline"><span class="text-xs opacity-70">Realized Cash (Delivered):</span><span class="text-base font-black text-emerald-400" id="widget-sales-gross">₹0</span></div>
+                            <div class="flex justify-between items-baseline"><span class="text-xs opacity-70">Kitchen Pipeline (Accepted):</span><span class="text-sm font-bold text-amber-300" id="widget-sales-pipeline">₹0</span></div>
+                            <div class="flex justify-between items-baseline"><span class="text-xs opacity-70">Average Ticket (AOV):</span><span class="text-xs font-semibold" id="widget-sales-aov">₹0</span></div>
+                            <div class="flex justify-between items-baseline"><span class="text-xs opacity-70">Leaked Value (Refused/Lost):</span><span class="text-xs font-semibold text-rose-300" id="widget-sales-lost">₹0</span></div>
+                        </div>
+                    </div>
+                    <!-- Right Block: Item Production Velocity Rankings leaderboard -->
+                    <div class="bg-white border p-5 rounded-2xl shadow-sm md:col-span-2 space-y-2">
+                        <h4 class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2 flex items-center gap-1">📊 Sandwich Manufacturing Volume Velocity Leaderboard</h4>
+                        <div id="widget-item-velocity-rows" class="space-y-1.5 text-xs"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-3" id="admin-counters-bar"></div>
+                <div id="admin-archive-list" class="space-y-3"></div>
+            </div>
+            <div id="admin-history-dormant-prompt" class="py-12 bg-zinc-50 border border-dashed rounded-2xl text-center text-xs text-zinc-400 font-medium">
+                ⚠️ Select a filter preset or use text parameters to reveal the history metrics dashboard.
+            </div>
+        </div>
+    </section>
+
+    <!-- RIDER DISPATCH VIEW -->
+    <section id="delivery-view" class="app-view max-w-2xl mx-auto p-4 hidden">
+        <div class="flex gap-2 border-b border-zinc-200 pb-px mb-4 font-semibold text-xs uppercase">
+            <button id="delivery-tab-btn-live" onclick="toggleDeliverySubTab('live')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">📦 Today's Active Run</button>
+            <button id="delivery-tab-btn-history" onclick="toggleDeliverySubTab('history')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">🗄️ Rider Ledger Dashboard</button>
+        </div>
+
+        <!-- SUB-TAB 1: TODAY'S LIVE RUNS ONLY -->
+        <div id="delivery-subcontainer-live" class="space-y-4 hidden">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs font-bold" id="delivery-live-counters-bar"></div>
+            <div id="delivery-queue-list" class="space-y-3"></div>
+        </div>
+
+        <!-- SUB-TAB 2: LIFETIME RIDER ARCHIVE -->
+        <div id="delivery-subcontainer-history" class="space-y-4 hidden">
+            <div class="bg-white border rounded-2xl p-4 shadow-sm grid grid-cols-1 md:grid-cols-5 gap-3 items-end text-xs font-bold text-zinc-500">
+                <div>
+                    <label class="block mb-1 text-[10px] uppercase">Select Window</label>
+                    <select id="delivery-date-range-preset" onchange="applyDeliveryHistoryPresets()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
+                        <option value="">-- Choose Timeline --</option>
+                        <option value="all">Lifetime History</option>
+                        <option value="yesterday">Yesterday</option>
+                        <option value="weekly">Past 7 Days</option>
+                        <option value="custom">Custom Date Range</option>
+                    </select>
+                </div>
+                <!-- OPTION 1 REVISION IMPLEMENTATION: DETAILED MULTI-DAY CUSTOM DATE RANGE BOUNDS FOR DRIVER TERMINAL -->
+                <div>
+                    <label class="block mb-1 text-[10px] uppercase">Start Date</label>
+                    <input type="date" id="delivery-date-start" onchange="triggerDeliveryHistorySearch()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block mb-1 text-[10px] uppercase">End Date</label>
+                    <input type="date" id="delivery-date-end" onchange="triggerDeliveryHistorySearch()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block mb-1 text-[10px] uppercase">Filter Status</label>
+                    <select id="delivery-status-filter" onchange="triggerDeliveryHistorySearch()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
+                        <option value="">All Statuses</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="Refused">Refused</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-1 text-[10px] uppercase">Search Keyword</label>
+                    <input type="text" id="delivery-search-input" oninput="triggerDeliveryHistorySearch()" placeholder="Search Name, Phone, or ID..." class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none focus:border-emerald-800">
+                </div>
+            </div>
+
+            <div id="delivery-history-dashboard-wrapper" class="space-y-4 hidden">
+                <div class="bg-indigo-950 text-white p-4 rounded-2xl flex justify-between items-center shadow-sm text-center text-xs font-bold">
+                    <div class="w-1/2 border-r border-indigo-900"><p class="text-[10px] uppercase opacity-60">Revenue Collected</p><p class="text-xl font-black text-emerald-400 mt-0.5" id="rider-history-cash-count">₹0</p></div>
+                    <div class="w-1/2"><p class="text-[10px] uppercase opacity-60">Delivered Drops</p><p class="text-xl font-black text-white mt-0.5" id="rider-history-delivery-count">0 Run(s)</p></div>
+                </div>
+                <div id="delivery-archive-list" class="space-y-2"></div>
+            </div>
+            <div id="delivery-history-dormant-prompt" class="py-12 bg-zinc-50 border border-dashed rounded-2xl text-center text-xs text-zinc-400 font-medium">
+                ⚠️ Select filter parameters to generate your rider history analysis matrix.
+            </div>
+        </div>
+    </section>
+
+    <!-- MASTER SYSTEM LOGIC ENGINE -->
+    <script>
+        function getLocalTodayString() {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function syncOrdersCache(serverData) {
+            if (!serverData) return [];
+            return serverData.map(order => {
+                if (localStatusMutations[order.OrderID]) {
+                    order.Status = localStatusMutations[order.OrderID];
+                }
+                return order;
+            });
+        }
+
+        function switchView(viewId) {
+            currentActivePane = viewId;
+            document.querySelectorAll('.app-view').forEach(view => view.classList.add('hidden'));
+            const destination = document.getElementById(viewId);
+            if(destination) destination.classList.remove('hidden');
+            window.location.hash = viewId;
+            updateNavbarDesignUI(viewId);
+        }
+
+        function toggleAdminSubTab(target) {
+            adminActiveSubTab = target;
+            document.getElementById('admin-tab-btn-live').className = `px-4 py-2 border-b-2 ${target==='live'?'border-[#052219] text-[#052219]':'border-transparent text-zinc-400'}`;
+            document.getElementById('admin-tab-btn-history').className = `px-4 py-2 border-b-2 ${target==='history'?'border-[#052219] text-[#052219]':'border-transparent text-zinc-400'}`;
+            document.getElementById('admin-subcontainer-live').classList.toggle('hidden', target !== 'live');
+            document.getElementById('admin-subcontainer-history').classList.toggle('hidden', target !== 'history');
+            
+            if(target === 'live') {
+                loadAdminData();
+            } else {
+                document.getElementById('admin-date-range-preset').value = "";
+                document.getElementById('admin-date-start').value = "";
+                document.getElementById('admin-date-end').value = "";
+                document.getElementById('admin-status-filter').value = "";
+                document.getElementById('admin-search-input').value = "";
+                document.getElementById('admin-history-dashboard-wrapper').classList.add('hidden');
+                document.getElementById('admin-history-dormant-prompt').classList.remove('hidden');
+            }
+        }
+
+        function toggleDeliverySubTab(target) {
+            deliveryActiveSubTab = target;
+            document.getElementById('delivery-tab-btn-live').className = `px-4 py-2 border-b-2 ${target==='live'?'border-[#052219] text-[#052219]':'border-transparent text-zinc-400'}`;
+            document.getElementById('delivery-tab-btn-history').className = `px-4 py-2 border-b-2 ${target==='history'?'border-[#052219] text-[#052219]':'border-transparent text-zinc-400'}`;
+            document.getElementById('delivery-subcontainer-live').classList.toggle('hidden', target !== 'live');
+            document.getElementById('delivery-subcontainer-history').classList.toggle('hidden', target !== 'history');
+            
+            if(target === 'live') {
+                loadDeliveryData();
+            } else {
+                document.getElementById('delivery-date-range-preset').value = "";
+                document.getElementById('delivery-date-start').value = "";
+                document.getElementById('delivery-date-end').value = "";
+                document.getElementById('delivery-status-filter').value = "";
+                document.getElementById('delivery-search-input').value = "";
+                document.getElementById('delivery-history-dashboard-wrapper').classList.add('hidden');
+                document.getElementById('delivery-history-dormant-prompt').classList.remove('hidden');
+            }
+        }
+
+        function generateItemTableHTML(itemsMap) {
+            if(!itemsMap || Object.keys(itemsMap).length === 0) return `<p class="text-zinc-400 italic text-[11px]">No items payload.</p>`;
+            return `<div class="space-y-1 bg-zinc-50 border border-zinc-100 p-3 rounded-xl font-medium my-2">` + 
+                Object.entries(itemsMap).map(([name, qty]) => `
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-zinc-700 font-semibold">${name}</span>
+                        <div class="flex-grow mx-2 border-b border-dashed border-zinc-200"></div>
+                        <span class="bg-[#052219] text-white text-[11px] px-2 py-0.5 rounded-md font-black min-w-[32px] text-center">×${qty}</span>
+                    </div>`).join('') + `</div>`;
+        }
+
+        function formatHumanDate(dateStr) {
+            if(!dateStr) return '';
+            const normalized = dateStr.split('T')[0]; 
+            const dateObj = new Date(normalized);
+            if(isNaN(dateObj.getTime())) return dateStr;
+            return dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        }
+
+        function initMenuUIElements() {
+            const container = document.getElementById('menu-container');
+            container.innerHTML = MENU.map(item => `
+                <div class="bg-white p-5 rounded-2xl border border-zinc-200/60 shadow-sm flex justify-between items-center">
+                    <div class="max-w-[68%]">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">${item.icon}</span>
+                            <h3 class="serif font-bold text-base text-[#052219]">${item.name}</h3>
+                        </div>
+                        <p class="text-[11px] text-zinc-400 mt-1.5 leading-relaxed font-medium">${item.desc}</p>
+                        <p class="text-sm font-bold text-amber-900 mt-2.5">₹${item.price}</p>
+                    </div>
+                    <div class="flex items-center gap-2 bg-zinc-50 border border-zinc-200 p-1 rounded-xl">
+                        <button onclick="updateCart('${item.name}', -1)" class="w-7 h-7 rounded-lg bg-white border border-zinc-200 flex items-center justify-center font-bold text-xs shadow-sm">-</button>
+                        <span id="qty-${btoa(item.name).replace(/=/g,'')}" class="w-6 text-center text-xs font-bold text-zinc-700">0</span>
+                        <button onclick="updateCart('${item.name}', 1)" class="w-7 h-7 rounded-lg bg-[#052219] text-white flex items-center justify-center font-bold text-xs shadow-sm">+</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        function initDateSelectors() {
+            const selectCheckout = document.getElementById('delivery-date-select');
+            const selectAdmin = document.getElementById('admin-forecast-date');
+            
+            let checkoutOptionsHtml = `<option value="">-- Choose Mandatory Delivery Date --</option>`;
+            for(let i=1; i<=3; i++) {
+                let d = new Date(); d.setDate(d.getDate() + i);
+                let dateString = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                let humanReadable = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                checkoutOptionsHtml += `<option value="${dateString}">${humanReadable}</option>`;
+            }
+            if(selectCheckout) selectCheckout.innerHTML = checkoutOptionsHtml;
+            
+            let adminOptionsHtml = "";
+            for(let i=0; i<=3; i++) {
+                let d = new Date(); d.setDate(d.getDate() + i);
+                let dateString = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                let prefix = (i === 0) ? "Today - " : "";
+                let humanReadable = prefix + d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                adminOptionsHtml += `<option value="${dateString}">${humanReadable}</option>`;
+            }
+            if(selectAdmin) selectAdmin.innerHTML = adminOptionsHtml;
+        }
+
+        function updateCart(itemName, change) {
+            if(!cart[itemName]) cart[itemName] = 0; cart[itemName] += change;
+            if(cart[itemName] <= 0) delete cart[itemName];
+            const elementId = "qty-" + btoa(itemName).replace(/=/g,'');
+            const targetSpan = document.getElementById(elementId);
+            if(targetSpan) targetSpan.innerText = cart[itemName] || 0;
+            calculateCartTotals();
+        }
+
+        function calculateCartTotals() {
+            let totalItemCount = 0; let totalPrice = 0;
+            for(let name in cart) { let match = MENU.find(m => m.name === name); if(match) { totalItemCount += cart[name]; totalPrice += (match.price * cart[name]); } }
+            const stickyBar = document.getElementById('cart-sticky');
+            if(stickyBar) stickyBar.classList.toggle('hidden', totalItemCount === 0);
+            if(totalItemCount > 0 && document.getElementById('cart-summary-text')) document.getElementById('cart-summary-text').innerText = `${totalItemCount} Sandwich(es) • ₹${totalPrice}`;
+            if(document.getElementById('checkout-items-list')) document.getElementById('checkout-items-list').innerHTML = generateItemTableHTML(cart);
+            if(document.getElementById('checkout-total-amt')) document.getElementById('checkout-total-amt').innerText = "₹" + totalPrice;
+        }
+
+        function submitOrder(e) {
+            if (e) e.preventDefault(); 
+
+            const name = document.getElementById('user-name').value.trim();
+            const phone = document.getElementById('user-phone').value.trim();
+            const address = document.getElementById('user-address').value.trim();
+            const deliveryDate = document.getElementById('delivery-date-select').value;
+            
+            // UX OVERHAUL: Replaced browser alert boxes with modern non-blocking Tailwind slider alerts
+            if(!name) { showToast("Recipient's Name missing.", "error"); return; }
+            if(!phone) { showToast("Mobile Call line target required.", "error"); return; }
+            if(!/^\d{10}$/.test(phone)) { showToast("Mobile Number string must feature exactly 10 digits.", "error"); return; }
+            if(!address) { showToast("Dropoff routing address configuration empty.", "error"); return; }
+            if(!deliveryDate) { showToast("Mandatory delivery date schedule must be chosen.", "error"); return; }
+            
+            let totalAmount = 0; let itemsInCart = 0;
+            for(let name in cart) { totalAmount += (MENU.find(m => m.name === name).price * cart[name]); itemsInCart += cart[name]; }
+            if(itemsInCart === 0) { showToast("Cart contains zero units.", "amber"); switchView('customer-menu'); return; }
+
+            const btn = document.getElementById('btn-submit-order'); 
+            if(btn) { btn.disabled = true; btn.innerText = "Transmitting Entry..."; }
+
+            requestDatabaseQuery({
+                action: "placeOrder",
+                name: name,
+                phone: phone,
+                address: address,
+                deliveryDate: deliveryDate,
+                items: JSON.stringify(cart),
+                total: totalAmount
+            }, "handleOrderPlacementResponse");
+        }
+
+        window.handleOrderPlacementResponse = function(response) {
+            const btn = document.getElementById('btn-submit-order');
+            if(btn) { btn.disabled = false; btn.innerText = "Confirm Pre-Order"; }
+
+            if(response && response.success) {
+                const name = document.getElementById('user-name').value.trim();
+                const phone = document.getElementById('user-phone').value.trim();
+                const address = document.getElementById('user-address').value.trim();
+
+                localStorage.setItem('sandwich_user_v3', JSON.stringify({ name: name, phone: phone, address: address }));
+                userProfile = { name: name, phone: phone, address: address };
+                
+                cart = {}; 
+                initMenuUIElements(); 
+                calculateCartTotals();
+                showToast("Order transmitted successfully to live dashboard logs pipeline!");
+                openHistory(); 
+            } else {
+                showToast("Network pipe interrupted. Please retry order transmission link.", "error");
+            }
+        };
+
+        function executeOptimisticStatusChange(orderId, status, cardDomId) {
+            const targetCard = document.getElementById(cardDomId);
+            if(targetCard) {
+                targetCard.classList.add('order-card-hide');
+                setTimeout(() => targetCard.remove(), 300);
+            }
+            localStatusMutations[orderId] = status;
+            
+            let cachedOrder = globalOrdersCache.find(o => o.OrderID === orderId);
+            if(cachedOrder) {
+                cachedOrder.Status = status; 
+                runKitchenForecast();
+                if(currentActivePane === 'admin-view') buildDashboardAnalyticsWidgets(globalOrdersCache, 'admin-counters-bar');
+            }
+            requestDatabaseQuery({ action: "updateStatus", orderId: orderId, status: status, pin: verifiedSessionPin }, "handleStatusMutationResponse");
+        }
+
+        window.handleStatusMutationResponse = function(response) {
+            if (response && response.orderId) { delete localStatusMutations[response.orderId]; }
+            if (response && !response.success && response.error) {
+                showToast(response.error, "error");
+            } else if (response && response.success) {
+                showToast("Order status successfully written to master ledger rows.");
+            }
+            if(currentActivePane === 'admin-view') loadAdminData();
+            if(currentActivePane === 'delivery-view') loadDeliveryData();
+            if(currentActivePane === 'customer-history') openHistory();
+        };
+
+        function applyAdminHistoryDatePresets() {
+            const preset = document.getElementById('admin-date-range-preset').value;
+            const startInput = document.getElementById('admin-date-start');
+            const endInput = document.getElementById('admin-date-end');
+            const todayStr = getLocalTodayString();
+            if(!preset) return;
+            
+            if(preset === 'all') { startInput.value = ''; endInput.value = ''; }
+            else if(preset === 'today') { startInput.value = todayStr; endInput.value = todayStr; }
+            else if(preset === 'weekly') {
+                let d = new Date(); d.setDate(d.getDate() - 7);
+                startInput.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; 
+                endInput.value = todayStr;
+            } else if(preset === 'monthly') {
+                let d = new Date(); d.setDate(d.getDate() - 30);
+                startInput.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; 
+                endInput.value = todayStr;
+            }
+            triggerAdminHistoryFilteredSearch();
+        }
+
+        // OPTION 3 IMPLEMENTATION: EXTRACTS FINANCIAL METRICS AND CHARTS ITEM PERFORMANCE
+        function triggerAdminHistoryFilteredSearch() {
+            const query = document.getElementById('admin-search-input').value.toLowerCase().trim();
+            const startDate = document.getElementById('admin-date-start').value;
+            const endDate = document.getElementById('admin-date-end').value;
+            const statusFilter = document.getElementById('admin-status-filter').value;
+            const preset = document.getElementById('admin-date-range-preset').value;
+            
+            const wrapper = document.getElementById('admin-history-dashboard-wrapper');
+            const promptEl = document.getElementById('admin-history-dormant-prompt');
+            const archiveBox = document.getElementById('admin-archive-list');
+
+            if(!preset && !startDate && !endDate && !query && !statusFilter) {
+                wrapper.classList.add('hidden'); promptEl.classList.remove('hidden'); return;
+            }
+            wrapper.classList.remove('hidden'); promptEl.className = "hidden";
+
+            let filtered = globalOrdersCache.filter(o => o.Status !== "Ordered");
+            if(startDate) { filtered = filtered.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] >= startDate); }
+            if(endDate) { filtered = filtered.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] <= endDate); }
+            if(statusFilter) { filtered = filtered.filter(o => o.Status === statusFilter); }
+            if(query) {
+                filtered = filtered.filter(o => o.OrderID.toLowerCase().includes(query) || o.CustomerName.toLowerCase().includes(query) || String(o.Phone).includes(query));
+            }
+
+            buildDashboardAnalyticsWidgets(filtered, 'admin-counters-bar');
+            
+            // DYNAMIC FINANCIAL AGGREGATIONS
+            let grossSales = 0; let pipelineSales = 0; let lostSales = 0; let totalDeliveredOrdersCount = 0;
+            let productVelocityTotals = { "Spinach N Corn Sandwich": 0, "Veg Coleslaw Sandwich": 0, "Veg Green salad sandwich": 0, "Chicken Salami Sandwich": 0, "Chicken Sandwich": 0 };
+            
+            filtered.forEach(o => {
+                let amt = Number(o.TotalAmount) || 0;
+                if(o.Status === "Delivered") { grossSales += amt; totalDeliveredOrdersCount++; }
+                else if(o.Status === "Accepted") { pipelineSales += amt; }
+                else if(o.Status === "Refused" || o.Status === "Rejected" || o.Status === "Cancelled") { lostSales += amt; }
+                
+                // Track breakdown parameters strictly for valid items processed
+                if(o.Status === "Delivered" || o.Status === "Accepted") {
+                    for(let name in o.ItemsBreakdown) {
+                        if(productVelocityTotals.hasOwnProperty(name)) productVelocityTotals[name] += Number(o.ItemsBreakdown[name]);
+                    }
+                }
+            });
+
+            let calculatedAOV = totalDeliveredOrdersCount > 0 ? Math.round(grossSales / totalDeliveredOrdersCount) : 0;
+            document.getElementById('widget-sales-gross').innerText = "₹" + grossSales;
+            document.getElementById('widget-sales-pipeline').innerText = "₹" + pipelineSales;
+            document.getElementById('widget-sales-lost').innerText = "₹" + lostSales;
+            document.getElementById('widget-sales-aov').innerText = "₹" + calculatedAOV + " / order";
+
+            // RENDER ITEM VELOCITY LEADERBOARD ROW ENTRIES
+            const sortedVelocityRows = Object.entries(productVelocityTotals).sort((a,b) => b[1] - a[1]);
+            const velocityContainer = document.getElementById('widget-item-velocity-rows');
+            const medalPrefixes = ["🏆 #1", "🥈 #2", "🥉 #3", "🏅 #4", "🏅 #5"];
+            
+            velocityContainer.innerHTML = sortedVelocityRows.map(([name, qty], idx) => `
+                <div class="flex justify-between items-center bg-zinc-50 border border-zinc-100 p-2 rounded-xl">
+                    <div class="flex items-center gap-2"><span class="font-bold text-amber-950 opacity-60 text-[10px] min-w-[28px]">${medalPrefixes[idx]}</span><span class="text-zinc-700 font-semibold">${name}</span></div>
+                    <span class="${qty > 0 ? 'bg-emerald-950 text-[#F3EDE4]' : 'bg-zinc-200 text-zinc-400'} font-bold px-2 py-0.5 rounded-md min-w-[50px] text-center">×${qty} units</span>
+                </div>`).join('');
+
+            document.getElementById('history-widget-total-count').innerText = filtered.length;
+            document.getElementById('history-widget-total-value').innerText = "₹" + grossSales;
+
+            if(filtered.length === 0) {
+                archiveBox.innerHTML = `<p class="text-xs text-zinc-400 italic text-center py-6 bg-zinc-50 border border-dashed rounded-xl">No historical records match parameters.</p>`; return;
+            }
+            archiveBox.innerHTML = filtered.map(order => {
+                let statusColor = order.Status === "Accepted" ? "bg-emerald-100 text-emerald-800" : (order.Status === "Delivered" ? "bg-blue-100 text-blue-800" : "bg-rose-100 text-rose-700");
+                return `
+                    <div class="bg-white p-5 rounded-2xl border border-zinc-200 text-xs shadow-sm">
+                        <div class="flex justify-between items-center border-b border-zinc-100 pb-2 mb-2">
+                            <span class="font-mono text-zinc-400 font-bold">${order.OrderID}</span>
+                            <span class="px-2 py-0.5 rounded-lg text-[10px] uppercase font-bold tracking-wider ${statusColor}">${order.Status}</span>
+                        </div>
+                        <p class="font-bold text-zinc-800 text-sm">👤 ${order.CustomerName} (${order.Phone})</p>
+                        ${generateItemTableHTML(order.ItemsBreakdown)}
+                        <p class="text-zinc-500 text-[11px] mt-1">📍 Address: ${order.Address}</p>
+                        <p class="text-zinc-400 text-[11px] mt-0.5 font-semibold">📅 Delivery Date: ${formatHumanDate(order.DeliveryDate)} | Value: ₹${order.TotalAmount}</p>
+                    </div>`;
+            }).join('');
+        }
+
+        function applyDeliveryHistoryPresets() {
+            const preset = document.getElementById('delivery-date-range-preset').value;
+            const startInput = document.getElementById('delivery-date-start');
+            const endInput = document.getElementById('delivery-date-end');
+            const todayStr = getLocalTodayString();
+            if(!preset) return;
+            
+            if(preset === 'all') { startInput.value = ''; endInput.value = ''; }
+            else if(preset === 'yesterday') {
+                let d = new Date(); d.setDate(d.getDate() - 1);
+                let yestStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                startInput.value = yestStr; endInput.value = yestStr;
+            } else if(preset === 'weekly') {
+                let d = new Date(); d.setDate(d.getDate() - 7);
+                startInput.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                endInput.value = todayStr;
+            }
+            triggerDeliveryHistorySearch();
+        }
+
+        function triggerDeliveryHistorySearch() {
+            const query = document.getElementById('delivery-search-input').value.toLowerCase().trim();
+            const startDate = document.getElementById('delivery-date-start').value;
+            const endDate = document.getElementById('delivery-date-end').value;
+            const statusFilter = document.getElementById('delivery-status-filter').value;
+            const preset = document.getElementById('delivery-date-range-preset').value;
+            
+            const wrapper = document.getElementById('delivery-history-dashboard-wrapper');
+            const promptEl = document.getElementById('delivery-history-dormant-prompt');
+            const archiveBox = document.getElementById('delivery-archive-list');
+
+            if(!preset && !startDate && !endDate && !query && !statusFilter) {
+                wrapper.classList.add('hidden'); promptEl.classList.remove('hidden'); return;
+            }
+            wrapper.classList.remove('hidden'); promptEl.classList.add('hidden');
+
+            let filtered = globalOrdersCache.filter(o => o.Status === "Delivered" || o.Status === "Refused");
+            if(startDate) { filtered = filtered.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] >= startDate); }
+            if(endDate) { filtered = filtered.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] <= endDate); }
+            if(statusFilter) { filtered = filtered.filter(o => o.Status === statusFilter); }
+            if(query) {
+                filtered = filtered.filter(o => o.OrderID.toLowerCase().includes(query) || o.CustomerName.toLowerCase().includes(query) || String(o.Phone).includes(query));
+            }
+
+            let cash = 0; let success = 0;
+            filtered.forEach(o => { if(o.Status === "Delivered") { cash += Number(o.TotalAmount) || 0; success++; } });
+            document.getElementById('rider-history-cash-count').innerText = "₹" + cash;
+            document.getElementById('rider-history-delivery-count').innerText = `${success} Run(s)`;
+
+            if(filtered.length === 0) {
+                archiveBox.innerHTML = `<p class="text-xs text-zinc-400 italic text-center py-6 bg-zinc-50 border border-dashed rounded-xl">No matching records window.</p>`; return;
+            }
+            archiveBox.innerHTML = filtered.map(o => `
+                <div class="bg-white p-4 border rounded-xl text-xs space-y-1 font-medium">
+                    <div class="flex justify-between items-center"><span><strong>${o.OrderID}</strong> • ${o.CustomerName}</span><span class="font-bold uppercase text-[9px] px-2 py-0.5 rounded-md ${o.Status==='Delivered'?'text-emerald-800 bg-emerald-50':'text-rose-700 bg-rose-50'}">${o.Status}</span></div>
+                    <p class="text-[11px] text-zinc-400">📍 Drop: ${o.Address} | Date: ${formatHumanDate(o.DeliveryDate)}</p>
+                    <p class="text-zinc-900 font-bold text-[11px]">Value: ₹${o.TotalAmount}</p>
+                </div>`).join('');
+        }
+
+        window.handleAdminDataResponse = function(response) {
+            if (response && !response.success && response.error) {
+                showToast(response.error, "error"); return;
+            }
+            if(!response || !response.success) return;
+            globalOrdersCache = syncOrdersCache(response.data); 
+            runKitchenForecast();
+            
+            const pending = globalOrdersCache.filter(o => o.Status === "Ordered");
+            const queue = document.getElementById('admin-queue-list');
+            if(!queue) return;
+            
+            if(pending.length === 0) {
+                queue.innerHTML = `<p class="text-xs text-zinc-400 py-6 bg-zinc-50 border rounded-2xl text-center">All clear. No incoming orders.</p>`;
+            } else {
+                queue.innerHTML = pending.map(order => {
+                    const cardId = `admin-card-${order.OrderID}`;
+                    return `
+                        <div id="${cardId}" class="bg-white p-5 rounded-2xl border border-zinc-200 text-xs shadow-sm flex flex-col md:flex-row justify-between md:items-center gap-4">
+                            <div class="space-y-1.5 w-full md:max-w-[70%]">
+                                <div class="flex items-center gap-2 flex-wrap mb-1">
+                                    <span class="font-mono text-zinc-400 font-bold block tracking-wider">${order.OrderID}</span>
+                                    ${generateUserCredibilityBadge(order.TotalOrdersPlaced, order.TotalRefusedDeliveries)}
+                                </div>
+                                <span class="text-zinc-800 font-bold block text-sm">👤 ${order.CustomerName} (${order.Phone})</span>
+                                ${generateItemTableHTML(order.ItemsBreakdown)}
+                                <p class="text-zinc-500 text-[11px]">📍 Address: ${order.Address}</p>
+                                <p class="text-emerald-950 font-bold text-[11px] mt-2 bg-emerald-50 w-fit px-2 py-0.5 rounded-md">📅 Target Delivery: ${formatHumanDate(order.DeliveryDate)} | Value: ₹${order.TotalAmount}</p>
+                            </div>
+                            <div class="flex flex-row md:flex-col gap-2 min-w-[100px]">
+                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Accepted', '${cardId}')" class="w-full bg-[#052219] text-white font-bold py-2 rounded-xl text-xs hover:bg-emerald-950">Accept</button>
+                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Rejected', '${cardId}')" class="w-full bg-zinc-50 text-zinc-500 font-bold py-2 rounded-xl border text-xs hover:bg-rose-50 hover:text-rose-700">Reject</button>
+                            </div>
+                        </div>`;
+                }).join('');
+            }
+            if(adminActiveSubTab === 'history') triggerAdminHistoryFilteredSearch();
+        };
+
+        window.handleHistoryDataResponse = function(response) {
+            const container = document.getElementById('orders-history-list');
+            if(!container || !response || !response.success) return;
+            globalOrdersCache = syncOrdersCache(response.data); 
+            const phone = userProfile ? userProfile.phone : '';
+            const filtered = globalOrdersCache.filter(order => String(order.Phone) === String(phone));
+            if(filtered.length === 0) { container.innerHTML = `<p class="text-xs text-zinc-400 text-center py-6">No matching logs found.</p>`; return; }
+            container.innerHTML = filtered.map(order => {
+                const cardId = `user-card-${order.OrderID}`;
+                let cancelBtn = order.Status === "Ordered" ? `<button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Cancelled', '${cardId}')" class="mt-3 text-xs w-full bg-rose-50 text-rose-700 font-bold p-2 rounded-xl border border-rose-100 hover:bg-rose-100 transition">Cancel This Request</button>` : '';
+                let statusColor = order.Status === "Accepted" ? "bg-emerald-100 text-emerald-800" : (order.Status === "Delivered" ? "bg-blue-100 text-blue-800" : "bg-rose-100 text-rose-700");
+                return `
+                    <div id="${cardId}" class="bg-white p-5 rounded-2xl border border-zinc-200/60 shadow-sm text-xs transition-all duration-300">
+                        <div class="flex justify-between font-bold items-center border-b border-zinc-100 pb-2 mb-2">
+                            <span class="text-zinc-400 uppercase font-mono tracking-wider">${order.OrderID}</span>
+                            <span class="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold tracking-wider ${statusColor}">${order.Status}</span>
+                        </div>
+                        ${generateItemTableHTML(order.ItemsBreakdown)}
+                        <div class="text-[11px] text-zinc-500 space-y-1">
+                            <p><strong>Deliver To:</strong> ${order.Address}</p>
+                            <p><strong>Scheduled Window:</strong> ${formatHumanDate(order.DeliveryDate)}</p>
+                            <p class="font-bold text-zinc-900 text-xs mt-2 pt-1 border-t border-zinc-100">Total Price Due: ₹${order.TotalAmount}</p>
+                        </div>
+                        ${cancelBtn}
+                    </div>`;
+            }).join('');
+        };
+
+        window.handleDeliveryDataResponse = function(response) {
+            if (response && !response.success && response.error) {
+                showToast(response.error, "error"); return;
+            }
+            if(!response || !response.success) return;
+            globalOrdersCache = syncOrdersCache(response.data); 
+            
+            const todayString = getLocalTodayString();
+            const todayPool = globalOrdersCache.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] === todayString);
+            const active = todayPool.filter(o => o.Status === "Accepted");
+            
+            let metrics = { accepted: active.length, delivered: 0, refused: 0, revenue: 0 };
+            todayPool.forEach(o => {
+                if(o.Status === "Delivered") { metrics.delivered++; metrics.revenue += Number(o.TotalAmount) || 0; }
+                if(o.Status === "Refused") { metrics.refused++; }
+            });
+
+            document.getElementById('delivery-live-counters-bar').innerHTML = `
+                <div class="p-2 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl"><p class="text-[9px] uppercase opacity-60">To Deliver</p><p class="text-base font-black mt-0.5">${metrics.accepted}</p></div>
+                <div class="p-2 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl"><p class="text-[9px] uppercase opacity-60">Delivered</p><p class="text-base font-black mt-0.5">${metrics.delivered}</p></div>
+                <div class="p-2 bg-rose-50 text-rose-800 border border-rose-200 rounded-xl"><p class="text-[9px] uppercase opacity-60">Refused</p><p class="text-base font-black mt-0.5">${metrics.refused}</p></div>
+                <div class="p-2 bg-blue-50 text-blue-800 border border-blue-200 rounded-xl"><p class="text-[9px] uppercase opacity-60">Collected</p><p class="text-base font-black mt-0.5">₹${metrics.revenue}</p></div>
+            `;
+
+            const list = document.getElementById('delivery-queue-list');
+            if(!list) return;
+            
+            if(active.length === 0) {
+                list.innerHTML = `<p class="text-xs text-zinc-400 text-center py-8 bg-zinc-50 border rounded-2xl border-dashed">No active accepted drops assigned for today.</p>`;
+            } else {
+                list.innerHTML = active.map(order => {
+                    const cardId = `delivery-card-${order.OrderID}`;
+                    return `
+                        <div id="${cardId}" class="bg-white p-5 rounded-2xl border-l-4 border-emerald-800 shadow-sm text-xs space-y-2">
+                            <div class="flex justify-between font-bold text-zinc-900 text-sm"><span>${order.OrderID}</span><span class="text-emerald-900 font-extrabold text-base">COD: ₹${order.TotalAmount}</span></div>
+                            ${generateItemTableHTML(order.ItemsBreakdown)}
+                            <div class="bg-zinc-50 p-3 rounded-xl text-zinc-600 space-y-1 text-[11px] font-medium">
+                                <p><strong>Customer:</strong> ${order.CustomerName}</p>
+                                <p><strong>Call Line:</strong> <a href="tel:${order.Phone}" class="text-emerald-800 underline font-bold">${order.Phone}</a></p>
+                                <p><strong>Address:</strong> ${order.Address}</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 pt-1">
+                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Delivered', '${cardId}')" class="bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-sm">✓ Paid & Delivered</button>
+                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Refused', '${cardId}')" class="bg-rose-50 text-rose-700 border border-rose-200 font-bold py-2.5 rounded-xl">❌ Refused</button>
+                            </div>
+                        </div>`;
+                }).join('');
+            }
+            if(deliveryActiveSubTab === 'history') triggerDeliveryHistorySearch();
+        };
+
+        function buildDashboardAnalyticsWidgets(orders, containerId) {
+            const container = document.getElementById(containerId); if(!container) return;
+            let m = { Ordered: 0, Accepted: 0, Delivered: 0, Rejected: 0, Refused: 0, Cancelled: 0 };
+            orders.forEach(o => { if(m.hasOwnProperty(o.Status)) m[o.Status]++; });
+            const configs = [
+                { title: "Incoming", count: m.Ordered, style: "bg-amber-50 text-amber-800 border-amber-200" },
+                { title: "Accepted Prep", count: m.Accepted, style: "bg-emerald-50 text-emerald-800 border-emerald-200" },
+                { title: "Delivered", count: m.Delivered, style: "bg-blue-50 text-blue-800 border-blue-200" },
+                { title: "Rejected", count: m.Rejected, style: "bg-zinc-100 text-zinc-500 border-zinc-200" },
+                { title: "Refused / Cancel", count: (m.Refused + m.Cancelled), style: "bg-rose-50 text-rose-800 border-rose-200" }
+            ];
+            container.innerHTML = configs.map(l => `<div class="p-3 bg-white border rounded-xl text-center shadow-sm ${l.style}"><p class="text-[10px] uppercase font-bold tracking-wider opacity-60">${l.title}</p><p class="text-xl font-black mt-0.5">${l.count}</p></div>`).join('');
+        }
+
+        // OPTION 1 REVISION IMPLEMENTATION: PIN DEPLOYMENTS ASYNC SERVER-SIDE VERIFICATION CHANNEL
+        function checkUrlParametersForSecureRoutes() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const pane = urlParams.get('pane');
+            
+            if (pane === 'admin' || pane === 'delivery') {
+                const promptValue = prompt(`Enter ${pane === 'admin' ? 'Access' : 'Rider'} Security PIN:`);
+                if (!promptValue) { window.location.href = window.location.pathname; return; }
+                
+                requestDatabaseQuery({
+                    action: "verifyPin",
+                    role: pane,
+                    pin: promptValue
+                }, "handleSecureRoutePinVerificationResponse");
+                
+                // Temporarily cache local value variable to reuse across subsequent transport channels
+                verifiedSessionPin = promptValue;
+            } else {
+                const activeHash = window.location.hash.replace('#','');
+                if(activeHash && document.getElementById(activeHash)) {
+                    switchView(activeHash); if(activeHash === 'customer-history') openHistory();
+                } else {
+                    switchView('customer-menu');
+                }
+            }
+        }
+
+        window.handleSecureRoutePinVerificationResponse = function(response) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const pane = urlParams.get('pane');
+            
+            if (response && response.success) {
+                showToast("Access Authorized. Synchronizing ledger caches...");
+                if (pane === 'admin') {
+                    switchView('admin-view'); toggleAdminSubTab('live');
+                } else {
+                    switchView('delivery-view'); toggleDeliverySubTab('live');
+                }
+            } else {
+                alert(response && response.error ? response.error : "Access Denied: Invalid Security Signature.");
+                verifiedSessionPin = "";
+                window.location.href = window.location.pathname;
+            }
+        };
+
+        function requestDatabaseQuery(params, callbackName) {
+            const oldScript = document.getElementById('api-transport-script'); if(oldScript) oldScript.remove();
+            const script = document.createElement('script'); script.id = 'api-transport-script';
+            const queryUrl = new URL(API_URL); for(let key in params) { queryUrl.searchParams.append(key, params[key]); }
+            queryUrl.searchParams.append('_t', new Date().getTime()); queryUrl.searchParams.append('prefix', callbackName);
+            script.src = queryUrl.toString(); document.body.appendChild(script);
+        }
+
+        function loadAdminData() { requestDatabaseQuery({ action: "getOrders", pin: verifiedSessionPin }, "handleAdminDataResponse"); }
+        function loadDeliveryData() { requestDatabaseQuery({ action: "getOrders", pin: verifiedSessionPin }, "handleDeliveryDataResponse"); }
+
+        function runKitchenForecast() {
+            const targetDate = document.getElementById('admin-forecast-date').value;
+            const summaryBox = document.getElementById('kitchen-summary-box');
+            if(!summaryBox || !targetDate) return;
+            
+            let totals = { "Spinach N Corn Sandwich": 0, "Veg Coleslaw Sandwich": 0, "Veg Green salad sandwich": 0, "Chicken Salami Sandwich": 0, "Chicken Sandwich": 0 };
+            globalOrdersCache.forEach(order => {
+                if(!order.DeliveryDate) return;
+                if(order.DeliveryDate.split('T')[0] === targetDate && (order.Status === "Accepted")) {
+                    for(let name in order.ItemsBreakdown) { if(totals.hasOwnProperty(name)) totals[name] += Number(order.ItemsBreakdown[name]); }
+                }
+            });
+            summaryBox.innerHTML = Object.entries(totals).map(([item, qty]) => `
+                <div class="flex justify-between items-center bg-zinc-50 p-3 rounded-xl border border-zinc-100 text-xs font-medium">
+                    <span class="text-zinc-700">${item}</span><span class="${qty > 0 ? 'bg-[#052219] text-white' : 'bg-zinc-200 text-zinc-400'} font-bold px-3 py-1 rounded-lg text-xs min-w-[34px] text-center">${qty}</span>
+                </div>`).join('');
+        }
+
+        function reloadHistoryFromInput() {
+            const phone = document.getElementById('history-phone-input').value.trim();
+            if(!phone || !/^\d{10}$/.test(phone)) { showToast("Enter a valid 10-digit number line.", "error"); return; }
+            userProfile = { name: "User", phone: phone, address: "" }; localStorage.setItem('sandwich_user_v3', JSON.stringify(userProfile));
+            document.getElementById('history-login-warning').classList.add('hidden'); openHistory();
+        }
+
+        function openHistory() {
+            switchView('customer-history');
+            if(!userProfile || !userProfile.phone) { document.getElementById('history-login-warning').classList.remove('hidden'); return; }
+            document.getElementById('history-login-warning').classList.add('hidden');
+            requestDatabaseQuery({ action: "getOrders", pin: verifiedSessionPin }, "handleHistoryDataResponse");
+        }
+
+        function returnToMainStorefront() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if(!urlParams.get('pane')) { switchView('customer-menu'); }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initMenuUIElements(); 
+            initDateSelectors();  
+            checkUrlParametersForSecureRoutes(); 
+            
+            const form = document.getElementById('checkout-form');
+            if(form) { form.addEventListener('submit', submitOrder); }
+
+            if(userProfile) {
+                if(document.getElementById('user-name') && userProfile.name) document.getElementById('user-name').value = userProfile.name;
+                if(document.getElementById('user-phone') && userProfile.phone) document.getElementById('user-phone').value = userProfile.phone;
+                if(document.getElementById('user-address') && userProfile.address) document.getElementById('user-address').value = userProfile.address;
+            }
+
+            requestDatabaseQuery({ action: "getOrders", pin: verifiedSessionPin }, "handleInitialLoadCacheResponse");
+        });
+
+        window.handleInitialLoadCacheResponse = function(response) {
+            if(response && response.success) {
+                globalOrdersCache = syncOrdersCache(response.data);
+                const selectAdmin = document.getElementById('admin-forecast-date');
+                if(selectAdmin) { selectAdmin.value = getLocalTodayString(); }
+                runKitchenForecast();
+            }
+        };
+
+        setInterval(() => {
+            if (currentActivePane === 'admin-view' && adminActiveSubTab === 'live' && verifiedSessionPin !== "") loadAdminData();
+            else if (currentActivePane === 'delivery-view' && deliveryActiveSubTab === 'live' && verifiedSessionPin !== "") loadDeliveryData();
+            else if (currentActivePane === 'customer-history' && userProfile?.phone) requestDatabaseQuery({ action: "getOrders", pin: verifiedSessionPin }, "handleHistoryDataResponse");
+        }, 15000);
+    </script>
+</body>
+</html>

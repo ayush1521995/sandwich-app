@@ -19,8 +19,7 @@
 
     <script>
         // --- CONFIGURATION SETUP ---
-        // Replace this exact link line with your updated Apps Script Exec deployment transport token URL string
-        const API_URL = "https://script.google.com/macros/s/AKfycbx51CH2GPgrZsrhZopI6FN23xG6Yvl5_ATSRQIhN0Dm9vhwdCX1mcCDnhldj93EPHkM/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbyoHcz8RUsenFJnxsERZIbCuYNH2y5e2k9VNloawe92ACyudAVmCze6naXc99sYd-hT-w/exec"; 
 
         const MENU = [
             { id: "item_1", name: "Spinach N Corn Sandwich", price: 110, desc: "Creamy blanched baby spinach and sweet kernel corn tossed lightly in house white sauce.", icon: "🥬" },
@@ -34,12 +33,11 @@
         let userProfile = JSON.parse(localStorage.getItem('sandwich_user_v3')) || null;
         let globalOrdersCache = [];
         let localStatusMutations = {}; 
-        let verifiedSessionPin = ""; // Server verified session token allocation cache tracking parameter
+        let verifiedSessionPin = ""; 
         let currentActivePane = 'customer-menu';
         let adminActiveSubTab = 'live'; 
         let deliveryActiveSubTab = 'live'; 
 
-        // OPTION 2 IMPLEMENTATION: BRAND NEW NON-BLOCKING VISUAL TOAST MANAGER ENGINE
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             if (!container) return;
@@ -204,10 +202,8 @@
                 </div>
             </div>
             
-            <!-- OPTION 3 IMPLEMENTATION: INTEGRATED MASTER REVENUE & PRODUCTION SUMMARY OVERVIEW PANEL -->
             <div id="admin-history-dashboard-wrapper" class="space-y-6 hidden">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="admin-financial-charts-grid">
-                    <!-- Left Block: Revenue Segment Splits -->
                     <div class="bg-[#052219] text-[#F3EDE4] p-5 rounded-2xl shadow-sm space-y-4 md:col-span-1 flex flex-col justify-between">
                         <div>
                             <h4 class="text-[10px] font-bold tracking-widest text-amber-400 uppercase">💰 Timeline Financial Ledger</h4>
@@ -220,7 +216,6 @@
                             <div class="flex justify-between items-baseline"><span class="text-xs opacity-70">Leaked Value (Refused/Lost):</span><span class="text-xs font-semibold text-rose-300" id="widget-sales-lost">₹0</span></div>
                         </div>
                     </div>
-                    <!-- Right Block: Item Production Velocity Rankings leaderboard -->
                     <div class="bg-white border p-5 rounded-2xl shadow-sm md:col-span-2 space-y-2">
                         <h4 class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2 flex items-center gap-1">📊 Sandwich Manufacturing Volume Velocity Leaderboard</h4>
                         <div id="widget-item-velocity-rows" class="space-y-1.5 text-xs"></div>
@@ -262,7 +257,6 @@
                         <option value="custom">Custom Date Range</option>
                     </select>
                 </div>
-                <!-- OPTION 1 REVISION IMPLEMENTATION: DETAILED MULTI-DAY CUSTOM DATE RANGE BOUNDS FOR DRIVER TERMINAL -->
                 <div>
                     <label class="block mb-1 text-[10px] uppercase">Start Date</label>
                     <input type="date" id="delivery-date-start" onchange="triggerDeliveryHistorySearch()" class="w-full bg-zinc-50 border rounded-lg p-2 font-medium text-zinc-700 focus:outline-none">
@@ -367,6 +361,14 @@
             }
         }
 
+        function generateUserCredibilityBadge(totalOrders, totalRefusals) {
+            let countOrders = Number(totalOrders) || 0;
+            let countRefusals = Number(totalRefusals) || 0;
+            if(countOrders === 0) return `<span class="bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded-md font-bold text-[10px] uppercase">🆕 New Customer</span>`;
+            if(countRefusals > 0) return `<span class="bg-rose-50 text-rose-800 border border-rose-200 px-2 py-0.5 rounded-md font-black text-[10px] uppercase animate-pulse">⚠️ Risk Actor (${countRefusals} Refusals)</span>`;
+            return `<span class="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-md font-bold text-[10px] uppercase">✅ Verified (${countOrders} Orders)</span>`;
+        }
+
         function generateItemTableHTML(itemsMap) {
             if(!itemsMap || Object.keys(itemsMap).length === 0) return `<p class="text-zinc-400 italic text-[11px]">No items payload.</p>`;
             return `<div class="space-y-1 bg-zinc-50 border border-zinc-100 p-3 rounded-xl font-medium my-2">` + 
@@ -384,6 +386,22 @@
             const dateObj = new Date(normalized);
             if(isNaN(dateObj.getTime())) return dateStr;
             return dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        }
+
+        function updateNavbarDesignUI(viewId) {
+            const title = document.getElementById('nav-main-title');
+            const subtitle = document.getElementById('nav-subtitle');
+            const linksBox = document.getElementById('nav-links-container');
+            if(viewId === 'admin-view') {
+                title.innerText = "The Cold Press Hub"; subtitle.innerText = "🛡️ KITCHEN ADMIN CONTROL";
+                linksBox.innerHTML = `<button onclick="loadAdminData()" class="text-amber-400 font-bold tracking-wide">Sync</button>`;
+            } else if (viewId === 'delivery-view') {
+                title.innerText = "Rider Terminal"; subtitle.innerText = "🚴 DISPATCH MANAGEMENT";
+                linksBox.innerHTML = `<button onclick="loadDeliveryData()" class="text-indigo-300 font-bold tracking-wide">Sync</button>`;
+            } else {
+                title.innerText = "The Cold Press"; subtitle.innerText = "Crafted Cold Delicatessen";
+                linksBox.innerHTML = `<button onclick="switchView('customer-menu')" class="hover:text-amber-300 transition">Menu</button><button onclick="openHistory()" class="hover:text-amber-300 transition">My Dashboard</button>`;
+            }
         }
 
         function initMenuUIElements() {
@@ -449,23 +467,29 @@
             if(document.getElementById('checkout-total-amt')) document.getElementById('checkout-total-amt').innerText = "₹" + totalPrice;
         }
 
+        // --- FIXED: RECIPIENT AND ITERATOR VARIABLE COLLISION RESOLVED COMPLETELY ---
         function submitOrder(e) {
             if (e) e.preventDefault(); 
 
-            const name = document.getElementById('user-name').value.trim();
+            const recipientName = document.getElementById('user-name').value.trim();
             const phone = document.getElementById('user-phone').value.trim();
             const address = document.getElementById('user-address').value.trim();
             const deliveryDate = document.getElementById('delivery-date-select').value;
             
-            // UX OVERHAUL: Replaced browser alert boxes with modern non-blocking Tailwind slider alerts
-            if(!name) { showToast("Recipient's Name missing.", "error"); return; }
+            if(!recipientName) { showToast("Recipient's Name missing.", "error"); return; }
             if(!phone) { showToast("Mobile Call line target required.", "error"); return; }
             if(!/^\d{10}$/.test(phone)) { showToast("Mobile Number string must feature exactly 10 digits.", "error"); return; }
             if(!address) { showToast("Dropoff routing address configuration empty.", "error"); return; }
             if(!deliveryDate) { showToast("Mandatory delivery date schedule must be chosen.", "error"); return; }
             
             let totalAmount = 0; let itemsInCart = 0;
-            for(let name in cart) { totalAmount += (MENU.find(m => m.name === name).price * cart[name]); itemsInCart += cart[name]; }
+            for(let itemName in cart) { 
+                let match = MENU.find(m => m.name === itemName); 
+                if(match) {
+                    totalAmount += (match.price * cart[itemName]); 
+                    itemsInCart += cart[itemName]; 
+                }
+            }
             if(itemsInCart === 0) { showToast("Cart contains zero units.", "amber"); switchView('customer-menu'); return; }
 
             const btn = document.getElementById('btn-submit-order'); 
@@ -473,7 +497,7 @@
 
             requestDatabaseQuery({
                 action: "placeOrder",
-                name: name,
+                name: recipientName,
                 phone: phone,
                 address: address,
                 deliveryDate: deliveryDate,
@@ -510,6 +534,7 @@
                 targetCard.classList.add('order-card-hide');
                 setTimeout(() => targetCard.remove(), 300);
             }
+            
             localStatusMutations[orderId] = status;
             
             let cachedOrder = globalOrdersCache.find(o => o.OrderID === orderId);
@@ -538,6 +563,7 @@
             const startInput = document.getElementById('admin-date-start');
             const endInput = document.getElementById('admin-date-end');
             const todayStr = getLocalTodayString();
+            
             if(!preset) return;
             
             if(preset === 'all') { startInput.value = ''; endInput.value = ''; }
@@ -554,7 +580,6 @@
             triggerAdminHistoryFilteredSearch();
         }
 
-        // OPTION 3 IMPLEMENTATION: EXTRACTS FINANCIAL METRICS AND CHARTS ITEM PERFORMANCE
         function triggerAdminHistoryFilteredSearch() {
             const query = document.getElementById('admin-search-input').value.toLowerCase().trim();
             const startDate = document.getElementById('admin-date-start').value;
@@ -581,7 +606,6 @@
 
             buildDashboardAnalyticsWidgets(filtered, 'admin-counters-bar');
             
-            // DYNAMIC FINANCIAL AGGREGATIONS
             let grossSales = 0; let pipelineSales = 0; let lostSales = 0; let totalDeliveredOrdersCount = 0;
             let productVelocityTotals = { "Spinach N Corn Sandwich": 0, "Veg Coleslaw Sandwich": 0, "Veg Green salad sandwich": 0, "Chicken Salami Sandwich": 0, "Chicken Sandwich": 0 };
             
@@ -591,7 +615,6 @@
                 else if(o.Status === "Accepted") { pipelineSales += amt; }
                 else if(o.Status === "Refused" || o.Status === "Rejected" || o.Status === "Cancelled") { lostSales += amt; }
                 
-                // Track breakdown parameters strictly for valid items processed
                 if(o.Status === "Delivered" || o.Status === "Accepted") {
                     for(let name in o.ItemsBreakdown) {
                         if(productVelocityTotals.hasOwnProperty(name)) productVelocityTotals[name] += Number(o.ItemsBreakdown[name]);
@@ -605,7 +628,6 @@
             document.getElementById('widget-sales-lost').innerText = "₹" + lostSales;
             document.getElementById('widget-sales-aov').innerText = "₹" + calculatedAOV + " / order";
 
-            // RENDER ITEM VELOCITY LEADERBOARD ROW ENTRIES
             const sortedVelocityRows = Object.entries(productVelocityTotals).sort((a,b) => b[1] - a[1]);
             const velocityContainer = document.getElementById('widget-item-velocity-rows');
             const medalPrefixes = ["🏆 #1", "🥈 #2", "🥉 #3", "🏅 #4", "🏅 #5"];
@@ -830,7 +852,6 @@
             container.innerHTML = configs.map(l => `<div class="p-3 bg-white border rounded-xl text-center shadow-sm ${l.style}"><p class="text-[10px] uppercase font-bold tracking-wider opacity-60">${l.title}</p><p class="text-xl font-black mt-0.5">${l.count}</p></div>`).join('');
         }
 
-        // OPTION 1 REVISION IMPLEMENTATION: PIN DEPLOYMENTS ASYNC SERVER-SIDE VERIFICATION CHANNEL
         function checkUrlParametersForSecureRoutes() {
             const urlParams = new URLSearchParams(window.location.search);
             const pane = urlParams.get('pane');
@@ -845,7 +866,6 @@
                     pin: promptValue
                 }, "handleSecureRoutePinVerificationResponse");
                 
-                // Temporarily cache local value variable to reuse across subsequent transport channels
                 verifiedSessionPin = promptValue;
             } else {
                 const activeHash = window.location.hash.replace('#','');

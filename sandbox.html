@@ -6,7 +6,7 @@
     <title>The Cold Press - Gourmet Cold Sandwiches</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght=300..700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght@300..700&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8F7F4; }
         .serif { font-family: 'Playfair Display', serif; }
         .order-card-hide { opacity: 0; transform: scale(0.95); transition: all 0.3s ease-out; }
@@ -14,11 +14,12 @@
 </head>
 <body class="text-zinc-800 selection:bg-emerald-100">
 
+    <!-- GLOBAL TOAST ELEMENT NOTIFICATION LAYER CONTAINER -->
     <div id="toast-container" class="fixed top-5 right-5 z-100 space-y-3 max-w-sm w-full pointer-events-none"></div>
 
     <script>
         // --- CONFIGURATION SETUP ---
-        const API_URL = "https://script.google.com/macros/s/AKfycbyrVjP3G-JuSgLoaXKV93GgZwL9NARsZCepiDQF0OutU1mRPe4a8vInJL--Aa0WrlBu/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbx51CH2GPgrZsrhZopI6FN23xG6Yvl5_ATSRQIhN0Dm9vhwdCX1mcCDnhldj93EPHkM/exec"; 
 
         const MENU = [
             { id: "item_1", name: "Spinach N Corn Sandwich", price: 110, desc: "Creamy blanched baby spinach and sweet kernel corn tossed lightly in house white sauce.", icon: "🥬" },
@@ -56,6 +57,7 @@
         }
     </script>
 
+    <!-- NAVBAR -->
     <nav class="bg-[#052219] text-[#F3EDE4] px-6 py-4 sticky top-0 z-50 shadow-sm flex justify-between items-center border-b border-emerald-950/40">
         <div onclick="returnToMainStorefront()" class="cursor-pointer">
             <h1 class="serif text-xl md:text-2xl font-bold tracking-wide" id="nav-main-title">The Cold Press</h1>
@@ -67,6 +69,7 @@
         </div>
     </nav>
 
+    <!-- CUSTOMER VIEW: MENU STOREFRONT -->
     <section id="customer-menu" class="app-view max-w-lg mx-auto p-4 pb-32">
         <div class="my-8 text-center px-4">
             <h2 class="serif text-3xl md:text-4xl font-semibold text-[#052219] tracking-tight">Today's Fresh Prep</h2>
@@ -86,10 +89,11 @@
         </div>
     </section>
 
+    <!-- CUSTOMER VIEW: CHECKOUT -->
     <section id="checkout-step" class="app-view max-w-md mx-auto p-4 hidden">
         <div class="mb-6">
             <button onclick="switchView('customer-menu')" class="text-xs text-emerald-800 font-bold tracking-wide flex items-center gap-1">← Modify Selected Items</button>
-            <h2 class="serif text-2xl font-bold text-[#052219] mt-2">Logistics Routing</h2>
+            <h2 class="serif text-2xl font-bold text-[#052219] mt-2" id="checkout-main-title">Delivery Details</h2>
         </div>
         <form id="checkout-form" class="bg-white p-6 rounded-3xl border border-zinc-200/60 shadow-sm space-y-5">
             <div class="space-y-4">
@@ -106,7 +110,7 @@
             </div>
             <div class="bg-amber-50 border-2 border-amber-400 p-4 rounded-2xl space-y-1.5">
                 <label class="block text-xs uppercase tracking-wider font-black text-amber-950 flex items-center gap-1">
-                    📅 2. Select Mandatory Delivery Date
+                    📅 2. Select Delivery Date
                 </label>
                 <select id="delivery-date-select" class="w-full bg-white border border-amber-300 rounded-xl p-3 text-sm font-bold text-amber-950 focus:outline-none focus:ring-2 focus:ring-emerald-800"></select>
             </div>
@@ -124,8 +128,9 @@
         </form>
     </section>
 
+    <!-- CUSTOMER DASHBOARD & HISTORY -->
     <section id="customer-history" class="app-view max-w-md mx-auto p-4 hidden">
-        <h2 class="serif text-2xl font-bold text-[#052219] my-5">Your Booking Dashboard</h2>
+        <h2 class="serif text-2xl font-bold text-[#052219] my-5">Your Order History</h2>
         <div id="history-login-warning" class="bg-amber-50 text-amber-900 border border-amber-200 p-4 rounded-2xl text-xs hidden mb-4">
             Verify account records. Input phone number line:
             <div class="flex gap-2 mt-2">
@@ -136,12 +141,14 @@
         <div id="orders-history-list" class="space-y-4"></div>
     </section>
 
+    <!-- ADMIN PANEL VIEW -->
     <section id="admin-view" class="app-view max-w-6xl mx-auto p-6 hidden">
         <div class="flex gap-2 border-b border-zinc-200 pb-px mb-6 font-semibold text-xs tracking-wide uppercase">
             <button id="admin-tab-btn-live" onclick="toggleAdminSubTab('live')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">🍳 Live Kitchen Track</button>
             <button id="admin-tab-btn-history" onclick="toggleAdminSubTab('history')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">📊 Dashboard & History Search</button>
         </div>
 
+        <!-- SUB-TAB 1: LIVE MONITOR -->
         <div id="admin-subcontainer-live" class="space-y-6 hidden">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2 space-y-4">
@@ -156,6 +163,7 @@
             </div>
         </div>
 
+        <!-- SUB-TAB 2: HISTORICAL RECORDS -->
         <div id="admin-subcontainer-history" class="space-y-6 hidden">
             <div class="bg-white border rounded-2xl p-5 shadow-sm grid grid-cols-1 sm:grid-cols-5 gap-4 items-end text-xs font-bold text-zinc-500">
                 <div>
@@ -223,17 +231,20 @@
         </div>
     </section>
 
+    <!-- RIDER DISPATCH VIEW -->
     <section id="delivery-view" class="app-view max-w-2xl mx-auto p-4 hidden">
         <div class="flex gap-2 border-b border-zinc-200 pb-px mb-4 font-semibold text-xs uppercase">
-            <button id="delivery-tab-btn-live" onclick="toggleDeliverySubTab('live')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">📦 Today's Active Run</button>
+            <button id="delivery-tab-btn-live" onclick="toggleDeliverySubTab('live')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">📦 Active Shipments Run</button>
             <button id="delivery-tab-btn-history" onclick="toggleDeliverySubTab('history')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">🗄️ Rider Ledger Dashboard</button>
         </div>
 
+        <!-- SUB-TAB 1: TODAY'S LIVE RUNS ONLY -->
         <div id="delivery-subcontainer-live" class="space-y-4 hidden">
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs font-bold" id="delivery-live-counters-bar"></div>
             <div id="delivery-queue-list" class="space-y-3"></div>
         </div>
 
+        <!-- SUB-TAB 2: LIFETIME RIDER ARCHIVE -->
         <div id="delivery-subcontainer-history" class="space-y-4 hidden">
             <div class="bg-white border rounded-2xl p-4 shadow-sm grid grid-cols-1 md:grid-cols-5 gap-3 items-end text-xs font-bold text-zinc-500">
                 <div>
@@ -281,6 +292,7 @@
         </div>
     </section>
 
+    <!-- MASTER SYSTEM LOGIC ENGINE -->
     <script>
         function getLocalTodayString() {
             const d = new Date();
@@ -290,7 +302,6 @@
             return `${year}-${month}-${day}`;
         }
 
-        // --- FIXED: PARSES CLEAN LOCAL CALENDAR STRINGS WITHOUT TIMEOUT TIMEZONE DRIFT ---
         function formatHumanDate(dateStr) {
             if(!dateStr) return '';
             let datePart = String(dateStr).split('T')[0];
@@ -324,6 +335,7 @@
             updateNavbarDesignUI(viewId);
         }
 
+        // REVISED TAB MANAGERS: ENFORCES ON-LOAD DATA ONBOARDING
         function toggleAdminSubTab(target) {
             adminActiveSubTab = target;
             document.getElementById('admin-tab-btn-live').className = `px-4 py-2 border-b-2 ${target==='live'?'border-[#052219] text-[#052219]':'border-transparent text-zinc-400'}`;
@@ -334,13 +346,9 @@
             if(target === 'live') {
                 loadAdminData();
             } else {
-                document.getElementById('admin-date-range-preset').value = "";
-                document.getElementById('admin-date-start').value = "";
-                document.getElementById('admin-date-end').value = "";
-                document.getElementById('admin-status-filter').value = "";
-                document.getElementById('admin-search-input').value = "";
-                document.getElementById('admin-history-dashboard-wrapper').classList.add('hidden');
-                document.getElementById('admin-history-dormant-prompt').classList.remove('hidden');
+                // FIXED: Sets preset dropdown values to 'today' by default to generate immediate data on tab load
+                document.getElementById('admin-date-range-preset').value = "today";
+                applyAdminHistoryDatePresets();
             }
         }
 
@@ -354,13 +362,9 @@
             if(target === 'live') {
                 loadDeliveryData();
             } else {
-                document.getElementById('delivery-date-range-preset').value = "";
-                document.getElementById('delivery-date-start').value = "";
-                document.getElementById('delivery-date-end').value = "";
-                document.getElementById('delivery-status-filter').value = "";
-                document.getElementById('delivery-search-input').value = "";
-                document.getElementById('delivery-history-dashboard-wrapper').classList.add('hidden');
-                document.getElementById('delivery-history-dormant-prompt').classList.remove('hidden');
+                // FIXED: Default rider log window configuration parameters to 'all' to prevent empty fields
+                document.getElementById('delivery-date-range-preset').value = "all";
+                applyDeliveryHistoryPresets();
             }
         }
 
@@ -381,6 +385,23 @@
                         <div class="flex-grow mx-2 border-b border-dashed border-zinc-200"></div>
                         <span class="bg-[#052219] text-white text-[11px] px-2 py-0.5 rounded-md font-black min-w-[32px] text-center">×${qty}</span>
                     </div>`).join('') + `</div>`;
+        }
+
+        // REVISED NAVBAR UI LOGIC: HIDES BOTH PUBLIC NAV LINKS FROM MANAGEMENT TERMINALS
+        function updateNavbarDesignUI(viewId) {
+            const title = document.getElementById('nav-main-title');
+            const subtitle = document.getElementById('nav-subtitle');
+            const linksBox = document.getElementById('nav-links-container');
+            if(viewId === 'admin-view') {
+                title.innerText = "The Cold Press Hub"; subtitle.innerText = "🛡️ KITCHEN ADMIN CONTROL";
+                linksBox.innerHTML = `<button onclick="loadAdminData()" class="text-amber-400 font-bold tracking-wide uppercase text-xs">🔄 Refresh Ledger</button>`;
+            } else if (viewId === 'delivery-view') {
+                title.innerText = "Rider Terminal"; subtitle.innerText = "🚴 DISPATCH MANAGEMENT";
+                linksBox.innerHTML = `<button onclick="loadDeliveryData()" class="text-indigo-300 font-bold tracking-wide uppercase text-xs">🔄 Refresh Runs</button>`;
+            } else {
+                title.innerText = "The Cold Press"; subtitle.innerText = "Crafted Cold Delicatessen";
+                linksBox.innerHTML = `<button onclick="switchView('customer-menu')" class="hover:text-amber-300 transition">Menu</button><button onclick="openHistory()" class="hover:text-amber-300 transition">My Dashboard</button>`;
+            }
         }
 
         function initMenuUIElements() {
@@ -407,7 +428,7 @@
             const selectCheckout = document.getElementById('delivery-date-select');
             const selectAdmin = document.getElementById('admin-forecast-date');
             
-            let checkoutOptionsHtml = `<option value="">-- Choose Mandatory Delivery Date --</option>`;
+            let checkoutOptionsHtml = `<option value="">-- Choose Delivery Date --</option>`;
             for(let i=1; i<=3; i++) {
                 let d = new Date(); d.setDate(d.getDate() + i);
                 let dateString = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -454,11 +475,11 @@
             const address = document.getElementById('user-address').value.trim();
             const deliveryDate = document.getElementById('delivery-date-select').value;
             
-            if(!recipientName) { showToast("Recipient's Name missing.", "error"); return; }
-            if(!phone) { showToast("Mobile Call line target required.", "error"); return; }
-            if(!/^\d{10}$/.test(phone)) { showToast("Mobile Number string must feature exactly 10 digits.", "error"); return; }
-            if(!address) { showToast("Dropoff routing address configuration empty.", "error"); return; }
-            if(!deliveryDate) { showToast("Mandatory delivery date schedule must be chosen.", "error"); return; }
+            if(!recipientName) { showToast("Recipient Name is required.", "error"); return; }
+            if(!phone) { showToast("Mobile Number is required.", "error"); return; }
+            if(!/^\d{10}$/.test(phone)) { showToast("Mobile Number must be exactly 10 digits.", "error"); return; }
+            if(!address) { showToast("Delivery Address is required.", "error"); return; }
+            if(!deliveryDate) { showToast("Please select a delivery date.", "error"); return; }
             
             let totalAmount = 0; let itemsInCart = 0;
             for(let itemName in cart) { 
@@ -468,10 +489,10 @@
                     itemsInCart += cart[itemName]; 
                 }
             }
-            if(itemsInCart === 0) { showToast("Cart contains zero units.", "amber"); switchView('customer-menu'); return; }
+            if(itemsInCart === 0) { showToast("Your cart is empty.", "amber"); switchView('customer-menu'); return; }
 
             const btn = document.getElementById('btn-submit-order'); 
-            if(btn) { btn.disabled = true; btn.innerText = "Transmitting Entry..."; }
+            if(btn) { btn.disabled = true; btn.innerText = "Processing Order..."; }
 
             requestDatabaseQuery({
                 action: "placeOrder",
@@ -499,10 +520,10 @@
                 cart = {}; 
                 initMenuUIElements(); 
                 calculateCartTotals();
-                showToast("Order transmitted successfully to live dashboard logs pipeline!");
+                showToast("Order placed successfully!");
                 openHistory(); 
             } else {
-                showToast("Network pipe interrupted. Please retry order transmission link.", "error");
+                showToast("Connection timed out. Please click submit again.", "error");
             }
         };
 
@@ -529,7 +550,7 @@
             if (response && !response.success && response.error) {
                 showToast(response.error, "error");
             } else if (response && response.success) {
-                showToast("Order status successfully written to master ledger rows.");
+                showToast("Order status successfully updated.");
             }
             if(currentActivePane === 'admin-view') loadAdminData();
             if(currentActivePane === 'delivery-view') loadDeliveryData();
@@ -698,6 +719,7 @@
                 </div>`).join('');
         }
 
+        // FIXED: RE-RENDER INTERCEPTORS AUTOMATICALLY KEEP DYNAMIC CALCULATIONS ACCURATE DURING LIVE AUTO-SYNC
         window.handleAdminDataResponse = function(response) {
             if (response && !response.success && response.error) {
                 showToast(response.error, "error"); return;
@@ -734,6 +756,7 @@
                         </div>`;
                 }).join('');
             }
+            // CRITICAL: Keeps your performance calculations accurate during live background updates without breaking the tab focus
             if(adminActiveSubTab === 'history') triggerAdminHistoryFilteredSearch();
         };
 
@@ -764,6 +787,7 @@
             }).join('');
         };
 
+        // REVISED DISPATCH MODULE: HANDLES BOTH CURRENT RUN RUNTIME TRACKING AND FUTURE PREVIEWS
         window.handleDeliveryDataResponse = function(response) {
             if (response && !response.success && response.error) {
                 showToast(response.error, "error"); return;
@@ -772,17 +796,23 @@
             globalOrdersCache = syncOrdersCache(response.data); 
             
             const todayString = getLocalTodayString();
-            const todayPool = globalOrdersCache.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] === todayString);
-            const active = todayPool.filter(o => o.Status === "Accepted");
             
-            let metrics = { accepted: active.length, delivered: 0, refused: 0, revenue: 0 };
-            todayPool.forEach(o => {
-                if(o.Status === "Delivered") { metrics.delivered++; metrics.revenue += Number(o.TotalAmount) || 0; }
-                if(o.Status === "Refused") { metrics.refused++; }
+            // OPTION 4 REVISION: Include all unfulfilled orders across current and future schedules
+            const active = globalOrdersCache.filter(o => o.Status === "Accepted");
+            
+            let metrics = { accepted: 0, delivered: 0, refused: 0, revenue: 0 };
+            
+            // Performance stats track today's target runs strictly
+            globalOrdersCache.forEach(o => {
+                if(o.DeliveryDate && o.DeliveryDate.split('T')[0] === todayString) {
+                    if(o.Status === "Accepted") metrics.accepted++;
+                    if(o.Status === "Delivered") { metrics.delivered++; metrics.revenue += Number(o.TotalAmount) || 0; }
+                    if(o.Status === "Refused") { metrics.refused++; }
+                }
             });
 
             document.getElementById('delivery-live-counters-bar').innerHTML = `
-                <div class="p-2 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl"><p class="text-[9px] uppercase opacity-60">To Deliver</p><p class="text-base font-black mt-0.5">${metrics.accepted}</p></div>
+                <div class="p-2 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl"><p class="text-[9px] uppercase opacity-60">Today's Pool</p><p class="text-base font-black mt-0.5">${metrics.accepted}</p></div>
                 <div class="p-2 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl"><p class="text-[9px] uppercase opacity-60">Delivered</p><p class="text-base font-black mt-0.5">${metrics.delivered}</p></div>
                 <div class="p-2 bg-rose-50 text-rose-800 border border-rose-200 rounded-xl"><p class="text-[9px] uppercase opacity-60">Refused</p><p class="text-base font-black mt-0.5">${metrics.refused}</p></div>
                 <div class="p-2 bg-blue-50 text-blue-800 border border-blue-200 rounded-xl"><p class="text-[9px] uppercase opacity-60">Collected</p><p class="text-base font-black mt-0.5">₹${metrics.revenue}</p></div>
@@ -796,18 +826,29 @@
             } else {
                 list.innerHTML = active.map(order => {
                     const cardId = `delivery-card-${order.OrderID}`;
+                    const isFuture = order.DeliveryDate && order.DeliveryDate.split('T')[0] > todayString;
+                    
+                    // Add distinct visual color tags to prevent riders from mixing up target distributions
+                    const scheduleTag = isFuture 
+                        ? `<span class="bg-purple-100 text-purple-800 font-extrabold px-2 py-0.5 rounded text-[10px] animate-pulse uppercase tracking-wider">📅 Future Advance Preview</span>`
+                        : `<span class="bg-amber-100 text-amber-800 font-extrabold px-2 py-0.5 rounded text-[10px] uppercase tracking-wider">☀️ Dispatch Today</span>`;
+
                     return `
-                        <div id="${cardId}" class="bg-white p-5 rounded-2xl border-l-4 border-emerald-800 shadow-sm text-xs space-y-2">
-                            <div class="flex justify-between font-bold text-zinc-900 text-sm"><span>${order.OrderID}</span><span class="text-emerald-900 font-extrabold text-base">COD: ₹${order.TotalAmount}</span></div>
+                        <div id="${cardId}" class="bg-white p-5 rounded-2xl border-l-4 ${isFuture ? 'border-purple-800' : 'border-emerald-800'} shadow-sm text-xs space-y-2">
+                            <div class="flex justify-between font-bold text-zinc-900 text-sm">
+                                <div class="flex items-center gap-2">${order.OrderID} ${scheduleTag}</div>
+                                <span class="text-emerald-900 font-extrabold text-base">COD: ₹${order.TotalAmount}</span>
+                            </div>
                             ${generateItemTableHTML(order.ItemsBreakdown)}
                             <div class="bg-zinc-50 p-3 rounded-xl text-zinc-600 space-y-1 text-[11px] font-medium">
                                 <p><strong>Customer:</strong> ${order.CustomerName}</p>
                                 <p><strong>Call Line:</strong> <a href="tel:${order.Phone}" class="text-emerald-800 underline font-bold">${order.Phone}</a></p>
                                 <p><strong>Address:</strong> ${order.Address}</p>
+                                <p class="text-zinc-500 font-bold mt-1">📅 Scheduled Delivery: ${formatHumanDate(order.DeliveryDate)}</p>
                             </div>
                             <div class="grid grid-cols-2 gap-2 pt-1">
-                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Delivered', '${cardId}')" class="bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-sm">✓ Paid & Delivered</button>
-                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Refused', '${cardId}')" class="bg-rose-50 text-rose-700 border border-rose-200 font-bold py-2.5 rounded-xl">❌ Refused</button>
+                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Delivered', '${cardId}')" class="bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-sm cursor-pointer hover:bg-emerald-800">✓ Paid & Delivered</button>
+                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Refused', '${cardId}')" class="bg-rose-50 text-rose-700 border border-rose-200 font-bold py-2.5 rounded-xl cursor-pointer hover:bg-rose-100">❌ Refused</button>
                             </div>
                         </div>`;
                 }).join('');

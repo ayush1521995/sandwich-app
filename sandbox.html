@@ -37,6 +37,7 @@
         let currentActivePane = 'customer-menu';
         let adminActiveSubTab = 'live'; 
         let deliveryActiveSubTab = 'live'; 
+        let riderLiveFilterMode = 'today'; // Tracks rider view filter state ('today', 'past', 'future')
 
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
@@ -58,7 +59,7 @@
     </script>
 
     <!-- NAVBAR -->
-    <nav class="bg-[#052219] text-[#F3EDE4] px-6 py-4 sticky top-0 z-50 shadow-sm flex justify-between items-center border-b border-emerald-950/40">
+    <nav class="bg-gradient-to-r from-[#041d15] to-[#0b3326] text-[#F3EDE4] px-6 py-4 sticky top-0 z-50 shadow-md flex justify-between items-center border-b border-emerald-950/40">
         <div onclick="returnToMainStorefront()" class="cursor-pointer">
             <h1 class="serif text-xl md:text-2xl font-bold tracking-wide" id="nav-main-title">The Cold Press</h1>
             <p class="text-[9px] uppercase tracking-widest text-amber-400 font-medium -mt-1" id="nav-subtitle">Crafted Cold Delicatessen</p>
@@ -93,7 +94,7 @@
     <section id="checkout-step" class="app-view max-w-md mx-auto p-4 hidden">
         <div class="mb-6">
             <button onclick="switchView('customer-menu')" class="text-xs text-emerald-800 font-bold tracking-wide flex items-center gap-1">← Modify Selected Items</button>
-            <h2 class="serif text-2xl font-bold text-[#052219] mt-2" id="checkout-main-title">Delivery Details</h2>
+            <h2 class="serif text-2xl font-bold text-[#052219] mt-2">Delivery Details</h2>
         </div>
         <form id="checkout-form" class="bg-white p-6 rounded-3xl border border-zinc-200/60 shadow-sm space-y-5">
             <div class="space-y-4">
@@ -241,6 +242,17 @@
         <!-- SUB-TAB 1: TODAY'S LIVE RUNS ONLY -->
         <div id="delivery-subcontainer-live" class="space-y-4 hidden">
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs font-bold" id="delivery-live-counters-bar"></div>
+            
+            <!-- OPTION 4 REVISION: ADVANCED ROUTING TIMELINE FILTERS FOR RIDER ENGINE -->
+            <div class="bg-white border p-3 rounded-2xl flex items-center justify-between gap-2 shadow-sm my-1">
+                <span class="text-[11px] uppercase font-black tracking-wider text-zinc-400 pl-1">🎯 Scope Filter Timeline:</span>
+                <div class="flex gap-1 bg-zinc-100 p-1 rounded-xl text-[11px] font-bold text-zinc-500">
+                    <button onclick="changeRiderTimelineScope('today')" id="rider-scope-today" class="px-3 py-1.5 rounded-lg bg-white text-zinc-800 shadow-sm transition-all">Today's Runs</button>
+                    <button onclick="changeRiderTimelineScope('past')" id="rider-scope-past" class="px-3 py-1.5 rounded-lg transition-all">Past Pending</button>
+                    <button onclick="changeRiderTimelineScope('future')" id="rider-scope-future" class="px-3 py-1.5 rounded-lg transition-all">Future Preview</button>
+                </div>
+            </div>
+
             <div id="delivery-queue-list" class="space-y-3"></div>
         </div>
 
@@ -302,9 +314,10 @@
             return `${year}-${month}-${day}`;
         }
 
+        // FIXED: Pure textual matching prevents multi-day timezone rolls entirely
         function formatHumanDate(dateStr) {
             if(!dateStr) return '';
-            let datePart = String(dateStr).split('T')[0];
+            let datePart = String(dateStr).split('T')[0].trim();
             if (datePart.includes('-')) {
                 const safeLocalDateObj = new Date(datePart.replace(/-/g, '/'));
                 if (!isNaN(safeLocalDateObj.getTime())) {
@@ -335,7 +348,6 @@
             updateNavbarDesignUI(viewId);
         }
 
-        // REVISED TAB MANAGERS: ENFORCES ON-LOAD DATA ONBOARDING
         function toggleAdminSubTab(target) {
             adminActiveSubTab = target;
             document.getElementById('admin-tab-btn-live').className = `px-4 py-2 border-b-2 ${target==='live'?'border-[#052219] text-[#052219]':'border-transparent text-zinc-400'}`;
@@ -346,7 +358,6 @@
             if(target === 'live') {
                 loadAdminData();
             } else {
-                // FIXED: Sets preset dropdown values to 'today' by default to generate immediate data on tab load
                 document.getElementById('admin-date-range-preset').value = "today";
                 applyAdminHistoryDatePresets();
             }
@@ -362,10 +373,27 @@
             if(target === 'live') {
                 loadDeliveryData();
             } else {
-                // FIXED: Default rider log window configuration parameters to 'all' to prevent empty fields
                 document.getElementById('delivery-date-range-preset').value = "all";
                 applyDeliveryHistoryPresets();
             }
+        }
+
+        // OPTION 4 REVISION: INTERACTIVE TIMELINE SWITCHER FOR RIDER MONITOR
+        function changeRiderTimelineScope(targetScope) {
+            riderLiveFilterMode = targetScope;
+            
+            const btnToday = document.getElementById('rider-scope-today');
+            const btnPast = document.getElementById('rider-scope-past');
+            const btnFuture = document.getElementById('rider-scope-future');
+            
+            const inactiveClass = "px-3 py-1.5 rounded-lg transition-all";
+            const activeClass = "px-3 py-1.5 rounded-lg bg-white text-zinc-800 shadow-sm transition-all";
+            
+            btnToday.className = targetScope === 'today' ? activeClass : inactiveClass;
+            btnPast.className = targetScope === 'past' ? activeClass : inactiveClass;
+            btnFuture.className = targetScope === 'future' ? activeClass : inactiveClass;
+            
+            renderRiderActiveRunInterface();
         }
 
         function generateUserCredibilityBadge(totalOrders, totalRefusals) {
@@ -383,11 +411,11 @@
                     <div class="flex justify-between items-center text-xs">
                         <span class="text-zinc-700 font-semibold">${name}</span>
                         <div class="flex-grow mx-2 border-b border-dashed border-zinc-200"></div>
-                        <span class="bg-[#052219] text-white text-[11px] px-2 py-0.5 rounded-md font-black min-w-[32px] text-center">×${qty}</span>
+                        <span class="bg-emerald-950 text-white text-[11px] px-2 py-0.5 rounded-md font-black min-w-[32px] text-center">×${qty}</span>
                     </div>`).join('') + `</div>`;
         }
 
-        // REVISED NAVBAR UI LOGIC: HIDES BOTH PUBLIC NAV LINKS FROM MANAGEMENT TERMINALS
+        // OPTION 2 REVISION: HIDES WORKSPACE CONFLICT LINKS FROM ADMINISTRATIVE CONSOLES
         function updateNavbarDesignUI(viewId) {
             const title = document.getElementById('nav-main-title');
             const subtitle = document.getElementById('nav-subtitle');
@@ -467,6 +495,7 @@
             if(document.getElementById('checkout-total-amt')) document.getElementById('checkout-total-amt').innerText = "₹" + totalPrice;
         }
 
+        // OPTION 3 REVISION: TEXT PARAMETERS REWRITTEN FOR CONSUMER-FACING COPY
         function submitOrder(e) {
             if (e) e.preventDefault(); 
 
@@ -523,7 +552,7 @@
                 showToast("Order placed successfully!");
                 openHistory(); 
             } else {
-                showToast("Connection timed out. Please click submit again.", "error");
+                showToast("Connection timed out. Please click confirm again.", "error");
             }
         };
 
@@ -637,9 +666,6 @@
                     <span class="${qty > 0 ? 'bg-emerald-950 text-[#F3EDE4]' : 'bg-zinc-200 text-zinc-400'} font-bold px-2 py-0.5 rounded-md min-w-[50px] text-center">×${qty} units</span>
                 </div>`).join('');
 
-            document.getElementById('history-widget-total-count').innerText = filtered.length;
-            document.getElementById('history-widget-total-value').innerText = "₹" + grossSales;
-
             if(filtered.length === 0) {
                 archiveBox.innerHTML = `<p class="text-xs text-zinc-400 italic text-center py-6 bg-zinc-50 border border-dashed rounded-xl">No historical records match parameters.</p>`; return;
             }
@@ -719,7 +745,6 @@
                 </div>`).join('');
         }
 
-        // FIXED: RE-RENDER INTERCEPTORS AUTOMATICALLY KEEP DYNAMIC CALCULATIONS ACCURATE DURING LIVE AUTO-SYNC
         window.handleAdminDataResponse = function(response) {
             if (response && !response.success && response.error) {
                 showToast(response.error, "error"); return;
@@ -747,16 +772,15 @@
                                 <span class="text-zinc-800 font-bold block text-sm">👤 ${order.CustomerName} (${order.Phone})</span>
                                 ${generateItemTableHTML(order.ItemsBreakdown)}
                                 <p class="text-zinc-500 text-[11px]">📍 Address: ${order.Address}</p>
-                                <p class="text-emerald-950 font-bold text-[11px] mt-2 bg-emerald-50 w-fit px-2 py-0.5 rounded-md">📅 Target Delivery: ${formatHumanDate(order.DeliveryDate)} | Value: ₹${order.TotalAmount}</p>
+                                <p class="text-[#052219] font-bold text-[11px] mt-2 bg-emerald-50 w-fit px-2 py-0.5 rounded-md">📅 Delivery Date: ${formatHumanDate(order.DeliveryDate)} | Value: ₹${order.TotalAmount}</p>
                             </div>
                             <div class="flex flex-row md:flex-col gap-2 min-w-[100px]">
-                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Accepted', '${cardId}')" class="w-full bg-[#052219] text-white font-bold py-2 rounded-xl text-xs hover:bg-emerald-950">Accept</button>
-                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Rejected', '${cardId}')" class="w-full bg-zinc-50 text-zinc-500 font-bold py-2 rounded-xl border text-xs hover:bg-rose-50 hover:text-rose-700">Reject</button>
+                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Accepted', '${cardId}')" class="w-full bg-[#052219] text-white font-bold py-2 rounded-xl text-xs cursor-pointer hover:bg-emerald-950">Accept</button>
+                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Rejected', '${cardId}')" class="w-full bg-zinc-50 text-zinc-500 font-bold py-2 rounded-xl border text-xs cursor-pointer hover:bg-rose-50 hover:text-rose-700">Reject</button>
                             </div>
                         </div>`;
                 }).join('');
             }
-            // CRITICAL: Keeps your performance calculations accurate during live background updates without breaking the tab focus
             if(adminActiveSubTab === 'history') triggerAdminHistoryFilteredSearch();
         };
 
@@ -768,7 +792,7 @@
             if(filtered.length === 0) { container.innerHTML = `<p class="text-xs text-zinc-400 text-center py-6">No matching logs found.</p>`; return; }
             container.innerHTML = filtered.map(order => {
                 const cardId = `user-card-${order.OrderID}`;
-                let cancelBtn = order.Status === "Ordered" ? `<button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Cancelled', '${cardId}')" class="mt-3 text-xs w-full bg-rose-50 text-rose-700 font-bold p-2 rounded-xl border border-rose-100 hover:bg-rose-100 transition">Cancel This Request</button>` : '';
+                let cancelBtn = order.Status === "Ordered" ? `<button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Cancelled', '${cardId}')" class="mt-3 text-xs w-full bg-rose-50 text-rose-700 font-bold p-2 rounded-xl border border-rose-100 hover:bg-rose-100 transition cursor-pointer">Cancel This Request</button>` : '';
                 let statusColor = order.Status === "Accepted" ? "bg-emerald-100 text-emerald-800" : (order.Status === "Delivered" ? "bg-blue-100 text-blue-800" : "bg-rose-100 text-rose-700");
                 return `
                     <div id="${cardId}" class="bg-white p-5 rounded-2xl border border-zinc-200/60 shadow-sm text-xs transition-all duration-300">
@@ -779,7 +803,7 @@
                         ${generateItemTableHTML(order.ItemsBreakdown)}
                         <div class="text-[11px] text-zinc-500 space-y-1">
                             <p><strong>Deliver To:</strong> ${order.Address}</p>
-                            <p><strong>Scheduled Window:</strong> ${formatHumanDate(order.DeliveryDate)}</p>
+                            <p><strong>Delivery Date:</strong> ${formatHumanDate(order.DeliveryDate)}</p>
                             <p class="font-bold text-zinc-900 text-xs mt-2 pt-1 border-t border-zinc-100">Total Price Due: ₹${order.TotalAmount}</p>
                         </div>
                         ${cancelBtn}
@@ -787,7 +811,59 @@
             }).join('');
         };
 
-        // REVISED DISPATCH MODULE: HANDLES BOTH CURRENT RUN RUNTIME TRACKING AND FUTURE PREVIEWS
+        // OPTION 4 REVISION: RIDER MONITOR INTERFACE CONTROL MODULE WITH TIMELINE SCOPES
+        function renderRiderActiveRunInterface() {
+            const todayString = getLocalTodayString();
+            const list = document.getElementById('delivery-queue-list');
+            if(!list) return;
+
+            // Isolate unfulfilled orders
+            let active = globalOrdersCache.filter(o => o.Status === "Accepted");
+            
+            // Apply targeted timeline conditions based on your active scope filter configuration
+            if (riderLiveFilterMode === 'today') {
+                active = active.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] === todayString);
+            } else if (riderLiveFilterMode === 'past') {
+                active = active.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] < todayString);
+            } else if (riderLiveFilterMode === 'future') {
+                active = active.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] > todayString);
+            }
+
+            if(active.length === 0) {
+                list.innerHTML = `<p class="text-xs text-zinc-400 text-center py-8 bg-zinc-50 border rounded-2xl border-dashed">No active shipments match this filter scope.</p>`;
+                return;
+            }
+
+            list.innerHTML = active.map(order => {
+                const cardId = `delivery-card-${order.OrderID}`;
+                const isFuture = order.DeliveryDate && order.DeliveryDate.split('T')[0] > todayString;
+                const isPast = order.DeliveryDate && order.DeliveryDate.split('T')[0] < todayString;
+                
+                let timelineBadge = `<span class="bg-amber-100 text-amber-800 font-extrabold px-2 py-0.5 rounded text-[10px] uppercase">☀️ Today</span>`;
+                if(isFuture) timelineBadge = `<span class="bg-purple-100 text-purple-800 font-extrabold px-2 py-0.5 rounded text-[10px] uppercase animate-pulse">🔮 Future Run</span>`;
+                if(isPast) timelineBadge = `<span class="bg-rose-100 text-rose-800 font-extrabold px-2 py-0.5 rounded text-[10px] uppercase">⚠️ Missed Run</span>`;
+
+                return `
+                    <div id="${cardId}" class="bg-white p-5 rounded-2xl border-l-4 ${isFuture ? 'border-purple-800' : (isPast ? 'border-rose-700' : 'border-emerald-800')} shadow-sm text-xs space-y-2">
+                        <div class="flex justify-between font-bold text-zinc-900 text-sm">
+                            <div class="flex items-center gap-2">${order.OrderID} ${timelineBadge}</div>
+                            <span class="text-emerald-900 font-extrabold text-base">COD: ₹${order.TotalAmount}</span>
+                        </div>
+                        ${generateItemTableHTML(order.ItemsBreakdown)}
+                        <div class="bg-zinc-50 p-3 rounded-xl text-zinc-600 space-y-1 text-[11px] font-medium">
+                            <p><strong>Customer:</strong> ${order.CustomerName}</p>
+                            <p><strong>Call Line:</strong> <a href="tel:${order.Phone}" class="text-emerald-800 underline font-bold">${order.Phone}</a></p>
+                            <p><strong>Address:</strong> ${order.Address}</p>
+                            <p class="text-zinc-500 font-bold mt-1">📅 Scheduled Delivery: ${formatHumanDate(order.DeliveryDate)}</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 pt-1">
+                            <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Delivered', '${cardId}')" class="bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-sm cursor-pointer hover:bg-emerald-800">✓ Paid & Delivered</button>
+                            <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Refused', '${cardId}')" class="bg-rose-50 text-rose-700 border border-rose-200 font-bold py-2.5 rounded-xl cursor-pointer hover:bg-rose-100">❌ Refused</button>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
         window.handleDeliveryDataResponse = function(response) {
             if (response && !response.success && response.error) {
                 showToast(response.error, "error"); return;
@@ -796,13 +872,8 @@
             globalOrdersCache = syncOrdersCache(response.data); 
             
             const todayString = getLocalTodayString();
-            
-            // OPTION 4 REVISION: Include all unfulfilled orders across current and future schedules
-            const active = globalOrdersCache.filter(o => o.Status === "Accepted");
-            
             let metrics = { accepted: 0, delivered: 0, refused: 0, revenue: 0 };
             
-            // Performance stats track today's target runs strictly
             globalOrdersCache.forEach(o => {
                 if(o.DeliveryDate && o.DeliveryDate.split('T')[0] === todayString) {
                     if(o.Status === "Accepted") metrics.accepted++;
@@ -818,57 +889,9 @@
                 <div class="p-2 bg-blue-50 text-blue-800 border border-blue-200 rounded-xl"><p class="text-[9px] uppercase opacity-60">Collected</p><p class="text-base font-black mt-0.5">₹${metrics.revenue}</p></div>
             `;
 
-            const list = document.getElementById('delivery-queue-list');
-            if(!list) return;
-            
-            if(active.length === 0) {
-                list.innerHTML = `<p class="text-xs text-zinc-400 text-center py-8 bg-zinc-50 border rounded-2xl border-dashed">No active accepted drops assigned for today.</p>`;
-            } else {
-                list.innerHTML = active.map(order => {
-                    const cardId = `delivery-card-${order.OrderID}`;
-                    const isFuture = order.DeliveryDate && order.DeliveryDate.split('T')[0] > todayString;
-                    
-                    // Add distinct visual color tags to prevent riders from mixing up target distributions
-                    const scheduleTag = isFuture 
-                        ? `<span class="bg-purple-100 text-purple-800 font-extrabold px-2 py-0.5 rounded text-[10px] animate-pulse uppercase tracking-wider">📅 Future Advance Preview</span>`
-                        : `<span class="bg-amber-100 text-amber-800 font-extrabold px-2 py-0.5 rounded text-[10px] uppercase tracking-wider">☀️ Dispatch Today</span>`;
-
-                    return `
-                        <div id="${cardId}" class="bg-white p-5 rounded-2xl border-l-4 ${isFuture ? 'border-purple-800' : 'border-emerald-800'} shadow-sm text-xs space-y-2">
-                            <div class="flex justify-between font-bold text-zinc-900 text-sm">
-                                <div class="flex items-center gap-2">${order.OrderID} ${scheduleTag}</div>
-                                <span class="text-emerald-900 font-extrabold text-base">COD: ₹${order.TotalAmount}</span>
-                            </div>
-                            ${generateItemTableHTML(order.ItemsBreakdown)}
-                            <div class="bg-zinc-50 p-3 rounded-xl text-zinc-600 space-y-1 text-[11px] font-medium">
-                                <p><strong>Customer:</strong> ${order.CustomerName}</p>
-                                <p><strong>Call Line:</strong> <a href="tel:${order.Phone}" class="text-emerald-800 underline font-bold">${order.Phone}</a></p>
-                                <p><strong>Address:</strong> ${order.Address}</p>
-                                <p class="text-zinc-500 font-bold mt-1">📅 Scheduled Delivery: ${formatHumanDate(order.DeliveryDate)}</p>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2 pt-1">
-                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Delivered', '${cardId}')" class="bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-sm cursor-pointer hover:bg-emerald-800">✓ Paid & Delivered</button>
-                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Refused', '${cardId}')" class="bg-rose-50 text-rose-700 border border-rose-200 font-bold py-2.5 rounded-xl cursor-pointer hover:bg-rose-100">❌ Refused</button>
-                            </div>
-                        </div>`;
-                }).join('');
-            }
+            renderRiderActiveRunInterface();
             if(deliveryActiveSubTab === 'history') triggerDeliveryHistorySearch();
         };
-
-        function buildDashboardAnalyticsWidgets(orders, containerId) {
-            const container = document.getElementById(containerId); if(!container) return;
-            let m = { Ordered: 0, Accepted: 0, Delivered: 0, Rejected: 0, Refused: 0, Cancelled: 0 };
-            orders.forEach(o => { if(m.hasOwnProperty(o.Status)) m[o.Status]++; });
-            const configs = [
-                { title: "Incoming", count: m.Ordered, style: "bg-amber-50 text-amber-800 border-amber-200" },
-                { title: "Accepted Prep", count: m.Accepted, style: "bg-emerald-50 text-emerald-800 border-emerald-200" },
-                { title: "Delivered", count: m.Delivered, style: "bg-blue-50 text-blue-800 border-blue-200" },
-                { title: "Rejected", count: m.Rejected, style: "bg-zinc-100 text-zinc-500 border-zinc-200" },
-                { title: "Refused / Cancel", count: (m.Refused + m.Cancelled), style: "bg-rose-50 text-rose-800 border-rose-200" }
-            ];
-            container.innerHTML = configs.map(l => `<div class="p-3 bg-white border rounded-xl text-center shadow-sm ${l.style}"><p class="text-[10px] uppercase font-bold tracking-wider opacity-60">${l.title}</p><p class="text-xl font-black mt-0.5">${l.count}</p></div>`).join('');
-        }
 
         function checkUrlParametersForSecureRoutes() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -893,6 +916,13 @@
                     switchView('customer-menu');
                 }
             }
+        }
+
+        window.openHistory = function() {
+            switchView('customer-history');
+            if(!userProfile || !userProfile.phone) { document.getElementById('history-login-warning').classList.remove('hidden'); return; }
+            document.getElementById('history-login-warning').classList.add('hidden');
+            requestDatabaseQuery({ action: "getOrders", phone: userProfile.phone }, "handleHistoryDataResponse");
         }
 
         window.handleSecureRoutePinVerificationResponse = function(response) {
@@ -949,13 +979,6 @@
             document.getElementById('history-login-warning').classList.add('hidden'); openHistory();
         }
 
-        function openHistory() {
-            switchView('customer-history');
-            if(!userProfile || !userProfile.phone) { document.getElementById('history-login-warning').classList.remove('hidden'); return; }
-            document.getElementById('history-login-warning').classList.add('hidden');
-            requestDatabaseQuery({ action: "getOrders", phone: userProfile.phone }, "handleHistoryDataResponse");
-        }
-
         function returnToMainStorefront() {
             const urlParams = new URLSearchParams(window.location.search);
             if(!urlParams.get('pane')) { switchView('customer-menu'); }
@@ -987,11 +1010,12 @@
             }
         };
 
+        // OPTION 5 REVISION: BACKGROUND POOLING LOOP INTERVAL OPTIMIZED TO 5 SECONDS FOR FASTER UPDATES
         setInterval(() => {
             if (currentActivePane === 'admin-view' && adminActiveSubTab === 'live' && verifiedSessionPin !== "") loadAdminData();
             else if (currentActivePane === 'delivery-view' && deliveryActiveSubTab === 'live' && verifiedSessionPin !== "") loadDeliveryData();
             else if (currentActivePane === 'customer-history' && userProfile?.phone) requestDatabaseQuery({ action: "getOrders", phone: userProfile.phone }, "handleHistoryDataResponse");
-        }, 15000);
+        }, 5000);
     </script>
 </body>
 </html>

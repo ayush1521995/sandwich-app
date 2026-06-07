@@ -6,7 +6,7 @@
     <title>The Cold Press - Gourmet Cold Sandwiches</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght=0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght=300..700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght=300..700&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8F7F4; }
         .serif { font-family: 'Playfair Display', serif; }
         .order-card-hide { opacity: 0; transform: scale(0.95); transition: all 0.3s ease-out; }
@@ -18,7 +18,7 @@
 
     <script>
         // --- CONFIGURATION SETUP ---
-        const API_URL = "https://script.google.com/macros/s/AKfycbx51CH2GPgrZsrhZopI6FN23xG6Yvl5_ATSRQIhN0Dm9vhwdCX1mcCDnhldj93EPHkM/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbyrVjP3G-JuSgLoaXKV93GgZwL9NARsZCepiDQF0OutU1mRPe4a8vInJL--Aa0WrlBu/exec"; 
 
         const MENU = [
             { id: "item_1", name: "Spinach N Corn Sandwich", price: 110, desc: "Creamy blanched baby spinach and sweet kernel corn tossed lightly in house white sauce.", icon: "🥬" },
@@ -290,21 +290,16 @@
             return `${year}-${month}-${day}`;
         }
 
-        // --- FIXED: PARSES CLEAN LOCAL CALENDAR STRINGS WITHOUT NETWORK OFFSETS ---
+        // --- FIXED: PARSES CLEAN LOCAL CALENDAR STRINGS WITHOUT TIMEOUT TIMEZONE DRIFT ---
         function formatHumanDate(dateStr) {
             if(!dateStr) return '';
-            
-            // Extracts pure 'YYYY-MM-DD' text format layout safely
             let datePart = String(dateStr).split('T')[0];
-            
             if (datePart.includes('-')) {
-                // Replacing text hyphens with forward slashes forces local system parsing
                 const safeLocalDateObj = new Date(datePart.replace(/-/g, '/'));
                 if (!isNaN(safeLocalDateObj.getTime())) {
                     return safeLocalDateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
                 }
             }
-            
             const fallbackDateObj = new Date(dateStr);
             if(isNaN(fallbackDateObj.getTime())) return dateStr;
             return fallbackDateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });

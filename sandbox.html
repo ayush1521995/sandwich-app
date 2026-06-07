@@ -6,7 +6,7 @@
     <title>The Cold Press - Gourmet Cold Sandwiches</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght@300..700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght=0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght=300..700&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8F7F4; }
         .serif { font-family: 'Playfair Display', serif; }
         .order-card-hide { opacity: 0; transform: scale(0.95); transition: all 0.3s ease-out; }
@@ -14,7 +14,6 @@
 </head>
 <body class="text-zinc-800 selection:bg-emerald-100">
 
-    <!-- GLOBAL TOAST ELEMENT NOTIFICATION LAYER CONTAINER -->
     <div id="toast-container" class="fixed top-5 right-5 z-100 space-y-3 max-w-sm w-full pointer-events-none"></div>
 
     <script>
@@ -37,7 +36,7 @@
         let currentActivePane = 'customer-menu';
         let adminActiveSubTab = 'live'; 
         let deliveryActiveSubTab = 'live'; 
-        let riderLiveFilterMode = 'today'; // Tracks rider view filter state ('today', 'past', 'future')
+        let riderLiveFilterMode = 'today'; 
 
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
@@ -58,8 +57,7 @@
         }
     </script>
 
-    <!-- NAVBAR -->
-    <nav class="bg-gradient-to-r from-[#041d15] to-[#0b3326] text-[#F3EDE4] px-6 py-4 sticky top-0 z-50 shadow-md flex justify-between items-center border-b border-emerald-950/40">
+    <nav class="bg-[#052219] text-[#F3EDE4] px-6 py-4 sticky top-0 z-50 shadow-sm flex justify-between items-center border-b border-emerald-950/40">
         <div onclick="returnToMainStorefront()" class="cursor-pointer">
             <h1 class="serif text-xl md:text-2xl font-bold tracking-wide" id="nav-main-title">The Cold Press</h1>
             <p class="text-[9px] uppercase tracking-widest text-amber-400 font-medium -mt-1" id="nav-subtitle">Crafted Cold Delicatessen</p>
@@ -70,7 +68,6 @@
         </div>
     </nav>
 
-    <!-- CUSTOMER VIEW: MENU STOREFRONT -->
     <section id="customer-menu" class="app-view max-w-lg mx-auto p-4 pb-32">
         <div class="my-8 text-center px-4">
             <h2 class="serif text-3xl md:text-4xl font-semibold text-[#052219] tracking-tight">Today's Fresh Prep</h2>
@@ -90,7 +87,6 @@
         </div>
     </section>
 
-    <!-- CUSTOMER VIEW: CHECKOUT -->
     <section id="checkout-step" class="app-view max-w-md mx-auto p-4 hidden">
         <div class="mb-6">
             <button onclick="switchView('customer-menu')" class="text-xs text-emerald-800 font-bold tracking-wide flex items-center gap-1">← Modify Selected Items</button>
@@ -129,7 +125,6 @@
         </form>
     </section>
 
-    <!-- CUSTOMER DASHBOARD & HISTORY -->
     <section id="customer-history" class="app-view max-w-md mx-auto p-4 hidden">
         <h2 class="serif text-2xl font-bold text-[#052219] my-5">Your Order History</h2>
         <div id="history-login-warning" class="bg-amber-50 text-amber-900 border border-amber-200 p-4 rounded-2xl text-xs hidden mb-4">
@@ -142,14 +137,12 @@
         <div id="orders-history-list" class="space-y-4"></div>
     </section>
 
-    <!-- ADMIN PANEL VIEW -->
     <section id="admin-view" class="app-view max-w-6xl mx-auto p-6 hidden">
         <div class="flex gap-2 border-b border-zinc-200 pb-px mb-6 font-semibold text-xs tracking-wide uppercase">
             <button id="admin-tab-btn-live" onclick="toggleAdminSubTab('live')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">🍳 Live Kitchen Track</button>
             <button id="admin-tab-btn-history" onclick="toggleAdminSubTab('history')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">📊 Dashboard & History Search</button>
         </div>
 
-        <!-- SUB-TAB 1: LIVE MONITOR -->
         <div id="admin-subcontainer-live" class="space-y-6 hidden">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2 space-y-4">
@@ -164,7 +157,6 @@
             </div>
         </div>
 
-        <!-- SUB-TAB 2: HISTORICAL RECORDS -->
         <div id="admin-subcontainer-history" class="space-y-6 hidden">
             <div class="bg-white border rounded-2xl p-5 shadow-sm grid grid-cols-1 sm:grid-cols-5 gap-4 items-end text-xs font-bold text-zinc-500">
                 <div>
@@ -232,31 +224,27 @@
         </div>
     </section>
 
-    <!-- RIDER DISPATCH VIEW -->
     <section id="delivery-view" class="app-view max-w-2xl mx-auto p-4 hidden">
         <div class="flex gap-2 border-b border-zinc-200 pb-px mb-4 font-semibold text-xs uppercase">
             <button id="delivery-tab-btn-live" onclick="toggleDeliverySubTab('live')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">📦 Active Shipments Run</button>
             <button id="delivery-tab-btn-history" onclick="toggleDeliverySubTab('history')" class="px-4 py-2 border-b-2 border-transparent text-zinc-400">🗄️ Rider Ledger Dashboard</button>
         </div>
 
-        <!-- SUB-TAB 1: TODAY'S LIVE RUNS ONLY -->
         <div id="delivery-subcontainer-live" class="space-y-4 hidden">
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs font-bold" id="delivery-live-counters-bar"></div>
             
-            <!-- OPTION 4 REVISION: ADVANCED ROUTING TIMELINE FILTERS FOR RIDER ENGINE -->
             <div class="bg-white border p-3 rounded-2xl flex items-center justify-between gap-2 shadow-sm my-1">
-                <span class="text-[11px] uppercase font-black tracking-wider text-zinc-400 pl-1">🎯 Scope Filter Timeline:</span>
+                <span class="text-[11px] uppercase font-black tracking-wider text-zinc-400 pl-1">🎯 Filter Active Target:</span>
                 <div class="flex gap-1 bg-zinc-100 p-1 rounded-xl text-[11px] font-bold text-zinc-500">
-                    <button onclick="changeRiderTimelineScope('today')" id="rider-scope-today" class="px-3 py-1.5 rounded-lg bg-white text-zinc-800 shadow-sm transition-all">Today's Runs</button>
-                    <button onclick="changeRiderTimelineScope('past')" id="rider-scope-past" class="px-3 py-1.5 rounded-lg transition-all">Past Pending</button>
-                    <button onclick="changeRiderTimelineScope('future')" id="rider-scope-future" class="px-3 py-1.5 rounded-lg transition-all">Future Preview</button>
+                    <button onclick="changeRiderTimelineScope('today')" id="rider-scope-today" class="px-3 py-1.5 rounded-lg bg-white text-zinc-800 shadow-sm transition-all cursor-pointer">Today's Runs</button>
+                    <button onclick="changeRiderTimelineScope('past')" id="rider-scope-past" class="px-3 py-1.5 rounded-lg transition-all cursor-pointer">Past Missed</button>
+                    <button onclick="changeRiderTimelineScope('future')" id="rider-scope-future" class="px-3 py-1.5 rounded-lg transition-all cursor-pointer">Future Preview</button>
                 </div>
             </div>
 
             <div id="delivery-queue-list" class="space-y-3"></div>
         </div>
 
-        <!-- SUB-TAB 2: LIFETIME RIDER ARCHIVE -->
         <div id="delivery-subcontainer-history" class="space-y-4 hidden">
             <div class="bg-white border rounded-2xl p-4 shadow-sm grid grid-cols-1 md:grid-cols-5 gap-3 items-end text-xs font-bold text-zinc-500">
                 <div>
@@ -304,7 +292,6 @@
         </div>
     </section>
 
-    <!-- MASTER SYSTEM LOGIC ENGINE -->
     <script>
         function getLocalTodayString() {
             const d = new Date();
@@ -314,7 +301,6 @@
             return `${year}-${month}-${day}`;
         }
 
-        // FIXED: Pure textual matching prevents multi-day timezone rolls entirely
         function formatHumanDate(dateStr) {
             if(!dateStr) return '';
             let datePart = String(dateStr).split('T')[0].trim();
@@ -378,30 +364,19 @@
             }
         }
 
-        // OPTION 4 REVISION: INTERACTIVE TIMELINE SWITCHER FOR RIDER MONITOR
         function changeRiderTimelineScope(targetScope) {
             riderLiveFilterMode = targetScope;
-            
             const btnToday = document.getElementById('rider-scope-today');
             const btnPast = document.getElementById('rider-scope-past');
             const btnFuture = document.getElementById('rider-scope-future');
+            const inactiveClass = "px-3 py-1.5 rounded-lg transition-all cursor-pointer";
+            const activeClass = "px-3 py-1.5 rounded-lg bg-white text-zinc-800 shadow-sm transition-all cursor-pointer";
             
-            const inactiveClass = "px-3 py-1.5 rounded-lg transition-all";
-            const activeClass = "px-3 py-1.5 rounded-lg bg-white text-zinc-800 shadow-sm transition-all";
-            
-            btnToday.className = targetScope === 'today' ? activeClass : inactiveClass;
-            btnPast.className = targetScope === 'past' ? activeClass : inactiveClass;
-            btnFuture.className = targetScope === 'future' ? activeClass : inactiveClass;
+            if(btnToday) btnToday.className = targetScope === 'today' ? activeClass : inactiveClass;
+            if(btnPast) btnPast.className = targetScope === 'past' ? activeClass : inactiveClass;
+            if(btnFuture) btnFuture.className = targetScope === 'future' ? activeClass : inactiveClass;
             
             renderRiderActiveRunInterface();
-        }
-
-        function generateUserCredibilityBadge(totalOrders, totalRefusals) {
-            let countOrders = Number(totalOrders) || 0;
-            let countRefusals = Number(totalRefusals) || 0;
-            if(countOrders === 0) return `<span class="bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded-md font-bold text-[10px] uppercase">🆕 New Customer</span>`;
-            if(countRefusals > 0) return `<span class="bg-rose-50 text-rose-800 border border-rose-200 px-2 py-0.5 rounded-md font-black text-[10px] uppercase animate-pulse">⚠️ Risk Actor (${countRefusals} Refusals)</span>`;
-            return `<span class="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-md font-bold text-[10px] uppercase">✅ Verified (${countOrders} Orders)</span>`;
         }
 
         function generateItemTableHTML(itemsMap) {
@@ -411,11 +386,10 @@
                     <div class="flex justify-between items-center text-xs">
                         <span class="text-zinc-700 font-semibold">${name}</span>
                         <div class="flex-grow mx-2 border-b border-dashed border-zinc-200"></div>
-                        <span class="bg-emerald-950 text-white text-[11px] px-2 py-0.5 rounded-md font-black min-w-[32px] text-center">×${qty}</span>
+                        <span class="bg-[#052219] text-white text-[11px] px-2 py-0.5 rounded-md font-black min-w-[32px] text-center">×${qty}</span>
                     </div>`).join('') + `</div>`;
         }
 
-        // OPTION 2 REVISION: HIDES WORKSPACE CONFLICT LINKS FROM ADMINISTRATIVE CONSOLES
         function updateNavbarDesignUI(viewId) {
             const title = document.getElementById('nav-main-title');
             const subtitle = document.getElementById('nav-subtitle');
@@ -495,7 +469,6 @@
             if(document.getElementById('checkout-total-amt')) document.getElementById('checkout-total-amt').innerText = "₹" + totalPrice;
         }
 
-        // OPTION 3 REVISION: TEXT PARAMETERS REWRITTEN FOR CONSUMER-FACING COPY
         function submitOrder(e) {
             if (e) e.preventDefault(); 
 
@@ -745,82 +718,13 @@
                 </div>`).join('');
         }
 
-        window.handleAdminDataResponse = function(response) {
-            if (response && !response.success && response.error) {
-                showToast(response.error, "error"); return;
-            }
-            if(!response || !response.success) return;
-            globalOrdersCache = syncOrdersCache(response.data); 
-            runKitchenForecast();
-            
-            const pending = globalOrdersCache.filter(o => o.Status === "Ordered");
-            const queue = document.getElementById('admin-queue-list');
-            if(!queue) return;
-            
-            if(pending.length === 0) {
-                queue.innerHTML = `<p class="text-xs text-zinc-400 py-6 bg-zinc-50 border rounded-2xl text-center">All clear. No incoming orders.</p>`;
-            } else {
-                queue.innerHTML = pending.map(order => {
-                    const cardId = `admin-card-${order.OrderID}`;
-                    return `
-                        <div id="${cardId}" class="bg-white p-5 rounded-2xl border border-zinc-200 text-xs shadow-sm flex flex-col md:flex-row justify-between md:items-center gap-4">
-                            <div class="space-y-1.5 w-full md:max-w-[70%]">
-                                <div class="flex items-center gap-2 flex-wrap mb-1">
-                                    <span class="font-mono text-zinc-400 font-bold block tracking-wider">${order.OrderID}</span>
-                                    ${generateUserCredibilityBadge(order.TotalOrdersPlaced, order.TotalRefusedDeliveries)}
-                                </div>
-                                <span class="text-zinc-800 font-bold block text-sm">👤 ${order.CustomerName} (${order.Phone})</span>
-                                ${generateItemTableHTML(order.ItemsBreakdown)}
-                                <p class="text-zinc-500 text-[11px]">📍 Address: ${order.Address}</p>
-                                <p class="text-[#052219] font-bold text-[11px] mt-2 bg-emerald-50 w-fit px-2 py-0.5 rounded-md">📅 Delivery Date: ${formatHumanDate(order.DeliveryDate)} | Value: ₹${order.TotalAmount}</p>
-                            </div>
-                            <div class="flex flex-row md:flex-col gap-2 min-w-[100px]">
-                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Accepted', '${cardId}')" class="w-full bg-[#052219] text-white font-bold py-2 rounded-xl text-xs cursor-pointer hover:bg-emerald-950">Accept</button>
-                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Rejected', '${cardId}')" class="w-full bg-zinc-50 text-zinc-500 font-bold py-2 rounded-xl border text-xs cursor-pointer hover:bg-rose-50 hover:text-rose-700">Reject</button>
-                            </div>
-                        </div>`;
-                }).join('');
-            }
-            if(adminActiveSubTab === 'history') triggerAdminHistoryFilteredSearch();
-        };
-
-        window.handleHistoryDataResponse = function(response) {
-            const container = document.getElementById('orders-history-list');
-            if(!container || !response || !response.success) return;
-            globalOrdersCache = syncOrdersCache(response.data); 
-            const filtered = globalOrdersCache; 
-            if(filtered.length === 0) { container.innerHTML = `<p class="text-xs text-zinc-400 text-center py-6">No matching logs found.</p>`; return; }
-            container.innerHTML = filtered.map(order => {
-                const cardId = `user-card-${order.OrderID}`;
-                let cancelBtn = order.Status === "Ordered" ? `<button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Cancelled', '${cardId}')" class="mt-3 text-xs w-full bg-rose-50 text-rose-700 font-bold p-2 rounded-xl border border-rose-100 hover:bg-rose-100 transition cursor-pointer">Cancel This Request</button>` : '';
-                let statusColor = order.Status === "Accepted" ? "bg-emerald-100 text-emerald-800" : (order.Status === "Delivered" ? "bg-blue-100 text-blue-800" : "bg-rose-100 text-rose-700");
-                return `
-                    <div id="${cardId}" class="bg-white p-5 rounded-2xl border border-zinc-200/60 shadow-sm text-xs transition-all duration-300">
-                        <div class="flex justify-between font-bold items-center border-b border-zinc-100 pb-2 mb-2">
-                            <span class="text-zinc-400 uppercase font-mono tracking-wider">${order.OrderID}</span>
-                            <span class="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold tracking-wider ${statusColor}">${order.Status}</span>
-                        </div>
-                        ${generateItemTableHTML(order.ItemsBreakdown)}
-                        <div class="text-[11px] text-zinc-500 space-y-1">
-                            <p><strong>Deliver To:</strong> ${order.Address}</p>
-                            <p><strong>Delivery Date:</strong> ${formatHumanDate(order.DeliveryDate)}</p>
-                            <p class="font-bold text-zinc-900 text-xs mt-2 pt-1 border-t border-zinc-100">Total Price Due: ₹${order.TotalAmount}</p>
-                        </div>
-                        ${cancelBtn}
-                    </div>`;
-            }).join('');
-        };
-
-        // OPTION 4 REVISION: RIDER MONITOR INTERFACE CONTROL MODULE WITH TIMELINE SCOPES
         function renderRiderActiveRunInterface() {
             const todayString = getLocalTodayString();
             const list = document.getElementById('delivery-queue-list');
             if(!list) return;
 
-            // Isolate unfulfilled orders
             let active = globalOrdersCache.filter(o => o.Status === "Accepted");
             
-            // Apply targeted timeline conditions based on your active scope filter configuration
             if (riderLiveFilterMode === 'today') {
                 active = active.filter(o => o.DeliveryDate && o.DeliveryDate.split('T')[0] === todayString);
             } else if (riderLiveFilterMode === 'past') {
@@ -891,6 +795,72 @@
 
             renderRiderActiveRunInterface();
             if(deliveryActiveSubTab === 'history') triggerDeliveryHistorySearch();
+        };
+
+        window.handleAdminDataResponse = function(response) {
+            if (response && !response.success && response.error) {
+                showToast(response.error, "error"); return;
+            }
+            if(!response || !response.success) return;
+            globalOrdersCache = syncOrdersCache(response.data); 
+            runKitchenForecast();
+            
+            const pending = globalOrdersCache.filter(o => o.Status === "Ordered");
+            const queue = document.getElementById('admin-queue-list');
+            if(!queue) return;
+            
+            if(pending.length === 0) {
+                queue.innerHTML = `<p class="text-xs text-zinc-400 py-6 bg-zinc-50 border rounded-2xl text-center">All clear. No incoming orders.</p>`;
+            } else {
+                queue.innerHTML = pending.map(order => {
+                    const cardId = `admin-card-${order.OrderID}`;
+                    return `
+                        <div id="${cardId}" class="bg-white p-5 rounded-2xl border border-zinc-200 text-xs shadow-sm flex flex-col md:flex-row justify-between md:items-center gap-4">
+                            <div class="space-y-1.5 w-full md:max-w-[70%]">
+                                <div class="flex items-center gap-2 flex-wrap mb-1">
+                                    <span class="font-mono text-zinc-400 font-bold block tracking-wider">${order.OrderID}</span>
+                                    ${generateUserCredibilityBadge(order.TotalOrdersPlaced, order.TotalRefusedDeliveries)}
+                                </div>
+                                <span class="text-zinc-800 font-bold block text-sm">👤 ${order.CustomerName} (${order.Phone})</span>
+                                ${generateItemTableHTML(order.ItemsBreakdown)}
+                                <p class="text-zinc-500 text-[11px]">📍 Address: ${order.Address}</p>
+                                <p class="text-[#052219] font-bold text-[11px] mt-2 bg-emerald-50 w-fit px-2 py-0.5 rounded-md">📅 Delivery Date: ${formatHumanDate(order.DeliveryDate)} | Value: ₹${order.TotalAmount}</p>
+                            </div>
+                            <div class="flex flex-row md:flex-col gap-2 min-w-[100px]">
+                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Accepted', '${cardId}')" class="w-full bg-[#052219] text-white font-bold py-2 rounded-xl text-xs cursor-pointer hover:bg-emerald-950">Accept</button>
+                                <button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Rejected', '${cardId}')" class="w-full bg-zinc-50 text-zinc-500 font-bold py-2 rounded-xl border text-xs cursor-pointer hover:bg-rose-50 hover:text-rose-700">Reject</button>
+                            </div>
+                        </div>`;
+                }).join('');
+            }
+            if(adminActiveSubTab === 'history') triggerAdminHistoryFilteredSearch();
+        };
+
+        window.handleHistoryDataResponse = function(response) {
+            const container = document.getElementById('orders-history-list');
+            if(!container || !response || !response.success) return;
+            globalOrdersCache = syncOrdersCache(response.data); 
+            const filtered = globalOrdersCache; 
+            if(filtered.length === 0) { container.innerHTML = `<p class="text-xs text-zinc-400 text-center py-6">No matching logs found.</p>`; return; }
+            container.innerHTML = filtered.map(order => {
+                const cardId = `user-card-${order.OrderID}`;
+                let cancelBtn = order.Status === "Ordered" ? `<button onclick="executeOptimisticStatusChange('${order.OrderID}', 'Cancelled', '${cardId}')" class="mt-3 text-xs w-full bg-rose-50 text-rose-700 font-bold p-2 rounded-xl border border-rose-100 hover:bg-rose-100 transition cursor-pointer">Cancel This Request</button>` : '';
+                let statusColor = order.Status === "Accepted" ? "bg-emerald-100 text-emerald-800" : (order.Status === "Delivered" ? "bg-blue-100 text-blue-800" : "bg-rose-100 text-rose-700");
+                return `
+                    <div id="${cardId}" class="bg-white p-5 rounded-2xl border border-zinc-200/60 shadow-sm text-xs transition-all duration-300">
+                        <div class="flex justify-between font-bold items-center border-b border-zinc-100 pb-2 mb-2">
+                            <span class="text-zinc-400 uppercase font-mono tracking-wider">${order.OrderID}</span>
+                            <span class="px-2.5 py-1 rounded-lg text-[10px] uppercase font-bold tracking-wider ${statusColor}">${order.Status}</span>
+                        </div>
+                        ${generateItemTableHTML(order.ItemsBreakdown)}
+                        <div class="text-[11px] text-zinc-500 space-y-1">
+                            <p><strong>Deliver To:</strong> ${order.Address}</p>
+                            <p><strong>Delivery Date:</strong> ${formatHumanDate(order.DeliveryDate)}</p>
+                            <p class="font-bold text-zinc-900 text-xs mt-2 pt-1 border-t border-zinc-100">Total Price Due: ₹${order.TotalAmount}</p>
+                        </div>
+                        ${cancelBtn}
+                    </div>`;
+            }).join('');
         };
 
         function checkUrlParametersForSecureRoutes() {
@@ -1010,7 +980,7 @@
             }
         };
 
-        // OPTION 5 REVISION: BACKGROUND POOLING LOOP INTERVAL OPTIMIZED TO 5 SECONDS FOR FASTER UPDATES
+        // LOOP SPEED BOOSTER: Background auto-sync interval set to 5 seconds for fast updates
         setInterval(() => {
             if (currentActivePane === 'admin-view' && adminActiveSubTab === 'live' && verifiedSessionPin !== "") loadAdminData();
             else if (currentActivePane === 'delivery-view' && deliveryActiveSubTab === 'live' && verifiedSessionPin !== "") loadDeliveryData();

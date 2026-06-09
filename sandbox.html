@@ -47,6 +47,9 @@ let riderLiveFilterMode    = 'today';
 
 // Tracks in-flight JSONP requests; prevents the old single-script cancel bug
 const _pending = {};
+// Separate caches: staff (all orders) vs customer (own orders only)
+// Keeps a customer auto-refresh from overwriting the staff admin cache
+let customerOrdersCache = [];
 </script>
 
 <!-- ================================================================
@@ -614,10 +617,17 @@ function submitOrder(e) {
   if (!deliveryDate)                { showToast('Please select a delivery date.',        'error'); return; }
   if (!Object.keys(cart).length)    { showToast('Your cart is empty.',                  'amber'); switchView('customer-menu'); return; }
 
+  // Compute total from local MENU prices before sending
+  let total = 0;
+  for (const itemName in cart) {
+    const m = MENU.find(i => i.name === itemName);
+    if (m) total += m.price * cart[itemName];
+  }
+
   const btn = document.getElementById('btn-submit-order');
   if (btn) { btn.disabled = true; btn.textContent = 'Placing Order…'; }
 
-  api({ action:'placeOrder', name, phone, address, deliveryDate, items: JSON.stringify(cart) }, 'handleOrderPlaced');
+  api({ action:'placeOrder', name, phone, address, deliveryDate, items: JSON.stringify(cart), total }, 'handleOrderPlaced');
 }
 
 window.handleOrderPlaced = function(res) {
@@ -665,8 +675,8 @@ window.handleHistoryData = function(res) {
     el.innerHTML = `<p class="text-xs text-rose-600 text-center py-6 font-bold">⚠️ Could not load orders. Check your connection.</p>`;
     return;
   }
-  globalOrdersCache = syncCache(res.data || []);
-  const orders = globalOrdersCache;
+  customerOrdersCache = syncCache(res.data || []);
+  const orders = customerOrdersCache;
   if (!orders.length) { el.innerHTML = `<p class="text-xs text-zinc-400 text-center py-6">No orders found.</p>`; return; }
 
   const statusColor = st => st === 'Accepted' ? 'bg-emerald-100 text-emerald-800'
@@ -798,6 +808,7 @@ function runKitchenForecast() {
   const date = (document.getElementById('admin-forecast-date') || {}).value;
   if (!el || !date) return;
 
+  // Seed with current MENU items (so known items always appear, even at 0)
   const totals = {};
   MENU.forEach(m => { totals[m.name] = 0; });
 
@@ -805,7 +816,8 @@ function runKitchenForecast() {
     if (o.Status !== 'Accepted') return;
     if ((o.DeliveryDate || '').split('T')[0] !== date) return;
     for (const name in o.ItemsBreakdown) {
-      if (totals.hasOwnProperty(name)) totals[name] += Number(o.ItemsBreakdown[name]);
+      // Use || 0 fallback so items not in current MENU still get counted
+      totals[name] = (totals[name] || 0) + Number(o.ItemsBreakdown[name]);
     }
   });
 
@@ -856,6 +868,7 @@ function runAdminHistoryFilter() {
 
   // Financial widgets
   let gross = 0, pipeline = 0, lost = 0, deliveredCount = 0;
+  // Seed velocity with MENU items (consistent display), but also capture any ordered item
   const vel = {};
   MENU.forEach(m => { vel[m.name] = 0; });
 
@@ -865,7 +878,9 @@ function runAdminHistoryFilter() {
     else if (o.Status === 'Accepted')  { pipeline += amt; }
     else if (['Refused','Rejected','Cancelled'].includes(o.Status)) { lost += amt; }
     if (['Delivered','Accepted'].includes(o.Status)) {
-      for (const n in o.ItemsBreakdown) { if (vel.hasOwnProperty(n)) vel[n] += Number(o.ItemsBreakdown[n]); }
+      for (const n in o.ItemsBreakdown) {
+        vel[n] = (vel[n] || 0) + Number(o.ItemsBreakdown[n]); // captures non-MENU items too
+      }
     }
   });
 
@@ -877,7 +892,7 @@ function runAdminHistoryFilter() {
   const medals = ['🏆 #1','🥈 #2','🥉 #3','🏅 #4','🏅 #5'];
   document.getElementById('w-velocity').innerHTML = Object.entries(vel).sort((a,b)=>b[1]-a[1]).map(([n,q],i)=>`
     <div class="flex justify-between items-center bg-zinc-50 p-2 rounded-xl border border-zinc-100">
-      <div class="flex items-center gap-2"><span class="font-bold text-amber-950 opacity-60 text-[10px] min-w-[28px]">${medals[i]}</span><span class="text-zinc-700 font-semibold">${s(n)}</span></div>
+      <div class="flex items-center gap-2"><span class="font-bold text-amber-950 opacity-60 text-[10px] min-w-[28px]">${medals[i] || ('#'+String(i+1))}</span><span class="text-zinc-700 font-semibold">${s(n)}</span></div>
       <span class="${q>0?'bg-emerald-950 text-[#F3EDE4]':'bg-zinc-200 text-zinc-400'} font-bold px-2 py-0.5 rounded-md min-w-[50px] text-center">×${q}</span>
     </div>`).join('');
 
@@ -1061,7 +1076,9 @@ function checkRoute() {
   if (pane === 'admin' || pane === 'delivery') {
     const entered = prompt(`Enter ${pane === 'admin' ? 'Admin' : 'Rider'} PIN:`);
     if (!entered) { window.location.href = window.location.pathname; return; }
-    verifiedSessionPin = entered;
+    // Don't set verifiedSessionPin yet — wait for server confirmation to prevent
+    // the 6-second auto-refresh firing loadAdminData() with an unverified PIN
+    window._pendingPin = entered;
     api({ action:'verifyPin', role: pane, pin: entered }, 'handlePinVerified');
   } else {
     const hash = window.location.hash.replace('#','');
@@ -1077,12 +1094,15 @@ function checkRoute() {
 window.handlePinVerified = function(res) {
   const pane = new URLSearchParams(window.location.search).get('pane');
   if (res && res.success) {
+    verifiedSessionPin = window._pendingPin || '';  // confirmed — now safe to store
+    delete window._pendingPin;
     showToast('Access granted. Loading data…');
     if (pane === 'admin') { switchView('admin-view'); toggleAdminSubTab('live'); }
     else                  { switchView('delivery-view'); toggleDeliverySubTab('live'); }
   } else {
-    alert(res && res.error ? res.error : 'Invalid PIN.');
+    delete window._pendingPin;
     verifiedSessionPin = '';
+    alert(res && res.error ? res.error : 'Invalid PIN.');
     window.location.href = window.location.pathname;
   }
 };

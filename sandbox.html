@@ -252,10 +252,17 @@ let customerOrdersCache = [];
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs font-bold" id="delivery-counters-bar"></div>
     <div class="bg-white border p-3 rounded-2xl flex items-center justify-between gap-2 shadow-sm">
       <span class="text-[11px] uppercase font-black tracking-wider text-zinc-400 pl-1">Filter:</span>
-      <div class="flex gap-1 bg-zinc-100 p-1 rounded-xl text-[11px] font-bold text-zinc-500">
-        <button onclick="setRiderScope('today')"  id="rscope-today"  class="px-3 py-1.5 rounded-lg bg-white text-zinc-800 shadow-sm transition-all cursor-pointer">Today</button>
-        <button onclick="setRiderScope('past')"   id="rscope-past"   class="px-3 py-1.5 rounded-lg transition-all cursor-pointer">Past</button>
-        <button onclick="setRiderScope('future')" id="rscope-future" class="px-3 py-1.5 rounded-lg transition-all cursor-pointer">Upcoming</button>
+      <div class="flex gap-1 bg-zinc-100 p-1 rounded-xl text-[11px] font-bold text-zinc-500 flex-wrap">
+        <button onclick="setRiderScope('today')"    id="rscope-today"    class="px-3 py-1.5 rounded-lg bg-white text-zinc-800 shadow-sm transition-all cursor-pointer">Today</button>
+        <button onclick="setRiderScope('tomorrow')" id="rscope-tomorrow" class="px-3 py-1.5 rounded-lg transition-all cursor-pointer">Tomorrow</button>
+        <button onclick="setRiderScope('future')"   id="rscope-future"   class="px-3 py-1.5 rounded-lg transition-all cursor-pointer">All Upcoming</button>
+        <button onclick="setRiderScope('past')"     id="rscope-past"     class="px-3 py-1.5 rounded-lg transition-all cursor-pointer">Past</button>
+        <button onclick="setRiderScope('pick')"     id="rscope-pick"     class="px-3 py-1.5 rounded-lg transition-all cursor-pointer">📅 Date</button>
+      </div>
+      <div id="rscope-datepicker" class="hidden mt-2">
+        <input type="date" id="rscope-custom-date"
+          onchange="setRiderScope('date:' + this.value)"
+          class="w-full bg-white border border-zinc-200 rounded-xl p-2.5 text-xs font-bold text-zinc-700 focus:outline-none focus:border-emerald-800">
       </div>
     </div>
     <div id="delivery-queue-list" class="space-y-3"></div>
@@ -485,13 +492,13 @@ function itemsTableHTML(map) {
 function credibilityBadge(totalOrders, totalRefusals) {
   const orders   = Number(totalOrders)   || 0;
   const refusals = Number(totalRefusals) || 0;
-  if (orders === 0)
-    return `<span class="bg-zinc-100 text-zinc-600 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">New</span>`;
+  if (orders <= 1)
+    return `<span class="bg-zinc-100 text-zinc-600 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">New · ${orders} order${orders===1?'':'s'}</span>`;
   const rate = (refusals / orders) * 100;
   if (rate > 40)
-    return `<span class="bg-rose-100 text-rose-800 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">⚠ High Risk · ${refusals}/${orders}</span>`;
+    return `<span class="bg-rose-100 text-rose-800 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">⚠ High Risk · ${refusals}/${orders} refused</span>`;
   if (rate > 20)
-    return `<span class="bg-amber-100 text-amber-800 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">⚡ Watch · ${refusals}/${orders}</span>`;
+    return `<span class="bg-amber-100 text-amber-800 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">⚡ Watch · ${refusals}/${orders} refused</span>`;
   if (orders >= 5)
     return `<span class="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">★ Loyal · ${orders} orders</span>`;
   return `<span class="bg-blue-100 text-blue-800 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">Regular · ${orders} orders</span>`;
@@ -948,14 +955,35 @@ window.handleDeliveryData = function(res) {
   if (deliveryActiveSubTab === 'history') runDeliveryHistoryFilter();
 };
 
+function tomorrowStr() {
+  const d = new Date(); d.setDate(d.getDate() + 1);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
 function setRiderScope(scope) {
   riderLiveFilterMode = scope;
-  const active = 'px-3 py-1.5 rounded-lg bg-white text-zinc-800 shadow-sm transition-all cursor-pointer';
-  const idle   = 'px-3 py-1.5 rounded-lg transition-all cursor-pointer';
-  ['today','past','future'].forEach(k => {
-    const btn = document.getElementById('rscope-'+k);
-    if (btn) btn.className = k === scope ? active : idle;
+  const active  = 'px-3 py-1.5 rounded-lg bg-white text-zinc-800 shadow-sm transition-all cursor-pointer';
+  const idle    = 'px-3 py-1.5 rounded-lg transition-all cursor-pointer';
+  const pickBtn = document.getElementById('rscope-pick');
+  const dpWrap  = document.getElementById('rscope-datepicker');
+
+  // All scope IDs including dynamic date scope
+  ['today','tomorrow','future','past','pick'].forEach(k => {
+    const btn = document.getElementById('rscope-' + k);
+    if (!btn) return;
+    // Highlight 'pick' button when a specific date is chosen
+    const isActive = (scope === k) || (scope.startsWith('date:') && k === 'pick');
+    btn.className = isActive ? active : idle;
   });
+
+  // Show/hide date picker
+  if (dpWrap) dpWrap.classList.toggle('hidden', scope !== 'pick' && !scope.startsWith('date:'));
+  // When switching away from date picker, clear the input
+  if (scope !== 'pick' && !scope.startsWith('date:')) {
+    const inp = document.getElementById('rscope-custom-date');
+    if (inp) inp.value = '';
+  }
+
   renderRiderRuns();
 }
 
@@ -964,10 +992,16 @@ function renderRiderRuns() {
   const list  = document.getElementById('delivery-queue-list');
   if (!list) return;
 
+  const tomorrow = tomorrowStr();
   let runs = globalOrdersCache.filter(o => o.Status === 'Accepted');
-  if      (riderLiveFilterMode === 'today')  runs = runs.filter(o => (o.DeliveryDate||'').split('T')[0] === today);
-  else if (riderLiveFilterMode === 'past')   runs = runs.filter(o => (o.DeliveryDate||'').split('T')[0] <  today);
-  else if (riderLiveFilterMode === 'future') runs = runs.filter(o => (o.DeliveryDate||'').split('T')[0] >  today);
+  if      (riderLiveFilterMode === 'today')              runs = runs.filter(o => (o.DeliveryDate||'').split('T')[0] === today);
+  else if (riderLiveFilterMode === 'tomorrow')           runs = runs.filter(o => (o.DeliveryDate||'').split('T')[0] === tomorrow);
+  else if (riderLiveFilterMode === 'past')               runs = runs.filter(o => (o.DeliveryDate||'').split('T')[0] <  today);
+  else if (riderLiveFilterMode === 'future')             runs = runs.filter(o => (o.DeliveryDate||'').split('T')[0] >  today);
+  else if (riderLiveFilterMode.startsWith('date:')) {
+    const picked = riderLiveFilterMode.split(':')[1];
+    runs = runs.filter(o => (o.DeliveryDate||'').split('T')[0] === picked);
+  }
 
   if (!runs.length) {
     list.innerHTML = `<p class="text-xs text-zinc-400 text-center py-8 bg-zinc-50 border rounded-2xl border-dashed">No assigned runs here.</p>`;
